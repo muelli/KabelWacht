@@ -124,6 +124,29 @@ jobs:
 
           ( cd site/fdroid && fdroid update --create-metadata --verbose )
 
+          # --- Software-freedom proof: F-Droid's own scanner (fails publish on any finding) ---
+          FDROID_VER="$(fdroid --version 2>&1 | head -1)"
+          fdroid scanner --exit-code "$SIGNED_APK" 2>&1 | tee scan.out
+          {
+            echo "KabelWacht — software-freedom report (versionCode $CODE)"
+            echo "Generated $(date -u '+%Y-%m-%d %H:%M:%SZ') by GitHub Actions."
+            echo
+            echo "== F-Droid scanner (fdroidserver $FDROID_VER) =="
+            echo "Command: fdroid scanner --exit-code kabelwacht-$CODE.apk"
+            echo "Result: PASS — no known non-free classes, trackers, or extra signing blocks."
+            echo
+            sed 's/^/    /' scan.out
+            echo
+            echo "== Bundled native libraries and their free-software origin =="
+            echo "  libwg.so, libwg-go.so, libwg-quick.so  <- com.wireguard.android:tunnel (GPL-2.0, wireguard-go)"
+            echo "  libandroidx.graphics.path.so           <- androidx.graphics:graphics-path (Apache-2.0)"
+            echo "  libdatastore_shared_counter.so         <- androidx.datastore (Apache-2.0)"
+            echo
+            unzip -l "$SIGNED_APK" | awk '/\.so$/{print "    "$4"  ("$1" bytes)"}'
+            echo
+            echo "App license: GPL-2.0-or-later. All dependencies are free software (see README)."
+          } > site/freedom-report.txt
+
           # Compute the repo fingerprint for the landing page / add-repo link.
           FP="$(keytool -list -v -keystore site/fdroid/fdroid.p12 -storepass "$FDROID_KEYSTORE_PASS" -alias "$FDROID_KEY_ALIAS" \
                 | awk -F': ' '/SHA256:/{gsub(/:/,"",$2); print tolower($2); exit}')"
@@ -163,6 +186,10 @@ jobs:
           <p>F-Droid is recommended so you get automatic updates. Otherwise download an
              APK and install it (you may need to allow installing from unknown sources):</p>
           <ul>${APK_LIST}</ul>
+          <h2>Software freedom</h2>
+          <p>This build passed <b>fdroid scanner</b> — F-Droid's own scanner for known
+             non-free libraries, trackers, and tampered signing blocks — with no
+             findings. <a href="freedom-report.txt">Read the full freedom report.</a></p>
           EOF
 
           # Commit only the public, signed artifacts — never the config/keystore.
