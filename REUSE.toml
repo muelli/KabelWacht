@@ -1,0 +1,50 @@
+version = 1
+
+# Bulk licensing information for files that do not carry an inline SPDX header
+# (and, harmlessly, for those that do — precedence "aggregate" merges identical
+# information). Files under third_party/ are git submodules and keep their own
+# upstream licensing.
+
+[[annotations]]
+path = [
+    "app/**",
+    "tunnel/**",
+    ".github/**",
+    "scripts/**",
+    "fastlane/**",
+    "fdroid/**",
+    "gradle/libs.versions.toml",
+    "gradle/verification-metadata.xml",
+    "build.gradle.kts",
+    "settings.gradle.kts",
+    "gradle.properties",
+    "version.properties",
+    ".gitignore",
+    ".gitmodules",
+    ".actrc",
+    "README.md",
+    "NOTICE",
+    "SECURITY.md",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Tobias Mueller and KabelWacht contributors"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+# The Gradle wrapper is vendored from Gradle and stays under its own license.
+[[annotations]]
+path = [
+    "gradlew",
+    "gradlew.bat",
+    "gradle/wrapper/gradle-wrapper.jar",
+    "gradle/wrapper/gradle-wrapper.properties",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Gradle, Inc."
+SPDX-License-Identifier = "Apache-2.0"
+
+# The root LICENSE file duplicates LICENSES/AGPL-3.0-or-later.txt for convenience.
+[[annotations]]
+path = ["LICENSE"]
+precedence = "override"
+SPDX-FileCopyrightText = "2007 Free Software Foundation, Inc. <https://fsf.org/>"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
