@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive  # WireGuard sources are built from source
 
       - name: Check required secrets
         id: gate
@@ -46,6 +48,10 @@ jobs:
       - name: Set up Android SDK
         if: steps.gate.outputs.ready == 'true'
         uses: android-actions/setup-android@v3
+
+      - name: Install NDK and CMake
+        if: steps.gate.outputs.ready == 'true'
+        run: sdkmanager "ndk;27.2.12479018" "cmake;3.22.1"
 
       - name: Set up Gradle
         if: steps.gate.outputs.ready == 'true'
