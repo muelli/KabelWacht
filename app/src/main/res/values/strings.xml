@@ -31,4 +31,8 @@
     <string name="camera_permission_required">Camera permission is required to scan QR codes.</string>
     <string name="file_read_failed">Could not read the selected file.</string>
     <string name="vpn_permission_required">VPN permission is required to connect.</string>
+
+    <!-- Always-on VPN -->
+    <string name="always_on_settings">Always-on VPN settings</string>
+    <string name="always_on_label">Always-on</string>
 </resources>

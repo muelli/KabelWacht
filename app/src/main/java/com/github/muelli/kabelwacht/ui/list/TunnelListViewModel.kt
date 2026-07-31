@@ -21,6 +21,7 @@ class TunnelListViewModel(
 
     val profiles: StateFlow<List<TunnelProfile>> = repository.profiles
     val activeTunnel: StateFlow<String?> = tunnelManager.activeTunnel
+    val alwaysOnTunnel: kotlinx.coroutines.flow.Flow<String?> = tunnelManager.alwaysOnTunnel
 
     private val _message = MutableStateFlow<String?>(null)
     /** Transient user-facing message (shown in a snackbar), or null. */
