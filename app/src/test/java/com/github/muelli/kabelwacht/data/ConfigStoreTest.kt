@@ -55,4 +55,55 @@ class ConfigStoreTest {
             ConfigStore.parse(invalid)
         }
     }
+
+    @Test
+    fun parses_multiple_peers() {
+        val twoPeers = """
+            [Interface]
+            PrivateKey = yAnz5TF+lXXJte14tji3zlMNq+hd2rYUIgJBgB3fBmk=
+            Address = 10.0.0.2/32
+
+            [Peer]
+            PublicKey = xTIBA5rboUvnH4htodjb6e697QjLERt1NAB4mZqp8Dg=
+            Endpoint = 192.95.5.69:51820
+            AllowedIPs = 10.0.0.0/24
+
+            [Peer]
+            PublicKey = TrMvSoP4jYQlY6RIzBgbssQqY3vxI2Pi+y71lOWWXX0=
+            Endpoint = 192.95.5.70:51820
+            AllowedIPs = 10.0.1.0/24
+        """.trimIndent()
+
+        val config = ConfigStore.parse(twoPeers)
+        assertEquals(2, config.peers.size)
+    }
+
+    @Test
+    fun optional_dns_is_allowed() {
+        // A config without a DNS line must still parse and round-trip.
+        val noDns = """
+            [Interface]
+            PrivateKey = yAnz5TF+lXXJte14tji3zlMNq+hd2rYUIgJBgB3fBmk=
+            Address = 10.0.0.2/32
+
+            [Peer]
+            PublicKey = xTIBA5rboUvnH4htodjb6e697QjLERt1NAB4mZqp8Dg=
+            AllowedIPs = 0.0.0.0/0
+        """.trimIndent()
+
+        val config = ConfigStore.parse(noDns)
+        assertTrue(config.getInterface().dnsServers.isEmpty())
+        // Round-trip stays stable.
+        assertEquals(
+            config.toWgQuickString(),
+            ConfigStore.parse(config.toWgQuickString()).toWgQuickString(),
+        )
+    }
+
+    @Test
+    fun blank_input_throws() {
+        assertThrows(BadConfigException::class.java) {
+            ConfigStore.parse("   \n\n")
+        }
+    }
 }
