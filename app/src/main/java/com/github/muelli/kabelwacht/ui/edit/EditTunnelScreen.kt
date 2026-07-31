@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Tobias Mueller and KabelWacht contributors
+
 package com.github.muelli.kabelwacht.ui.edit
 
 import androidx.compose.foundation.layout.Column
