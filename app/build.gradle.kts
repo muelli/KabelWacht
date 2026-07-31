@@ -15,6 +15,9 @@ val appVersionCode = Properties().apply {
 android {
     namespace = "com.github.muelli.kabelwacht"
     compileSdk = 35
+    // Needed so the app's packaging step can strip the native libraries built by
+    // the :tunnel module (otherwise libwg-go.so ships unstripped, ~8 MB/ABI).
+    ndkVersion = "27.2.12479018"
 
     defaultConfig {
         applicationId = "com.github.muelli.kabelwacht"
