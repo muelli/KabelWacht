@@ -149,6 +149,23 @@ jobs:
 
           ( cd site/fdroid && fdroid update --create-metadata --verbose )
 
+          # fdroidserver sometimes indexes localized graphics under hashed names
+          # (icon_<hash>.png) without writing the file under that name, 404ing the
+          # icon for clients and the landing page. Make every indexed graphic path
+          # actually exist by copying the plain file to the referenced name.
+          python3 - <<'PY'
+          import json, os, shutil
+          repo = "site/fdroid/repo"
+          idx = json.load(open(f"{repo}/index-v2.json"))
+          for appid, pkg in idx.get("packages", {}).items():
+              for entry in (pkg.get("metadata", {}).get("icon") or {}).values():
+                  ref = repo + entry["name"]
+                  plain = os.path.join(os.path.dirname(ref), "icon.png")
+                  if not os.path.exists(ref) and os.path.exists(plain):
+                      shutil.copy(plain, ref)
+                      print(f"restored indexed icon path: {entry['name']}")
+          PY
+
           # --- Software-freedom proof: F-Droid's own scanner (fails publish on any finding) ---
           FDROID_VER="$(fdroid --version 2>&1 | head -1)"
           fdroid scanner --exit-code "$SIGNED_APK" 2>&1 | tee scan.out
