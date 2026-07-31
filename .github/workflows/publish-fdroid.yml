@@ -58,6 +58,7 @@ jobs:
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
         with:
           dependency-graph: disabled  # avoids classpath artifacts absent from verification-metadata
+          cache-read-only: true  # tag runs reuse main's cache without churning it
 
       - name: Build and sign release APK
         if: steps.gate.outputs.ready == 'true'
@@ -157,7 +158,8 @@ jobs:
             sed 's/^/    /' scan.out
             echo
             echo "== Bundled native libraries and their free-software origin =="
-            echo "  libwg.so, libwg-go.so, libwg-quick.so  <- com.wireguard.android:tunnel (GPL-2.0, wireguard-go)"
+            echo "  libwg-go.so                            <- wireguard-go (MIT), built from source"
+            echo "  libwg.so, libwg-quick.so               <- wireguard-tools (GPL-2.0), built from source"
             echo "  libandroidx.graphics.path.so           <- androidx.graphics:graphics-path (Apache-2.0)"
             echo "  libdatastore_shared_counter.so         <- androidx.datastore (Apache-2.0)"
             echo
