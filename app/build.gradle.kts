@@ -85,8 +85,9 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    // WireGuard userspace backend (GPL-2.0) + wg-quick config parser.
-    implementation(libs.wireguard.tunnel)
+    // WireGuard tunnel library, built FROM SOURCE by the :tunnel module
+    // (Apache-2.0 Java + libwg-go.so/libwg.so/libwg-quick.so). No prebuilt AAR.
+    implementation(project(":tunnel"))
 
     // QR scanning (Apache-2.0, no Google Play Services / ML Kit).
     implementation(libs.zxing.android.embedded)
