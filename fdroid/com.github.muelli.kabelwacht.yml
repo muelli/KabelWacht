@@ -18,6 +18,10 @@ Changelog: https://github.com/muelli/kabelwacht/releases
 RepoType: git
 Repo: https://github.com/muelli/kabelwacht.git
 
+# Binaries lets F-Droid compare its own reproducible build against the developer's
+# signed APK and, on a match, mark the build "Reproducible" / publish it verbatim.
+Binaries: https://muelli.github.io/KabelWacht/fdroid/repo/kabelwacht-%c.apk
+
 Builds:
   - versionName: '1'
     versionCode: 1
@@ -26,7 +30,18 @@ Builds:
     gradle:
       - yes
 
+  # From v2, WireGuard is built from source, so the build needs the submodules,
+  # the NDK, and network access for the pinned Go toolchain and Go modules.
+  - versionName: '2'
+    versionCode: 2
+    commit: v2
+    subdir: app
+    submodules: true
+    ndk: 27.2.12479018
+    gradle:
+      - yes
+
 AutoUpdateMode: Version v%c
 UpdateCheckMode: Tags
-CurrentVersion: '1'
-CurrentVersionCode: 1
+CurrentVersion: '2'
+CurrentVersionCode: 2
