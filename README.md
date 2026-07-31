@@ -12,14 +12,18 @@ for Android. It manages tunnel profiles and connects — nothing more.
 
 ## Free-software dependencies
 
-| Purpose | Library | License |
+| Purpose | Component | License |
 | --- | --- | --- |
-| WireGuard backend + wg-quick parser | [`com.wireguard.android:tunnel`](https://git.zx2c4.com/wireguard-android/) | GPL-2.0 |
+| WireGuard tunnel library + wg-quick parser | [`com.wireguard.android:tunnel`](https://git.zx2c4.com/wireguard-android/) | Apache-2.0 |
+| Userspace WireGuard (`libwg-go.so`) | [wireguard-go](https://git.zx2c4.com/wireguard-go/) | MIT |
+| `wg` / `wg-quick` binaries (`libwg.so`, `libwg-quick.so`) | [wireguard-tools](https://git.zx2c4.com/wireguard-tools/) | GPL-2.0 |
 | QR code scanning | [`com.journeyapps:zxing-android-embedded`](https://github.com/journeyapps/zxing-android-embedded) | Apache-2.0 |
 | UI | AndroidX Jetpack Compose (Material 3) | Apache-2.0 |
 
-Because it links the GPL-2.0 WireGuard tunnel library, **KabelWacht is licensed
-GPL-2.0-or-later** (see [`LICENSE`](LICENSE)).
+**KabelWacht is licensed [AGPL-3.0-or-later](LICENSE).** The dependencies keep their
+own (compatible) licenses — see [`NOTICE`](NOTICE). The `wg`/`wg-quick` binaries are
+GPL-2.0 programs invoked as separate subprocesses (aggregation); AGPL-3.0 imposes no
+copyleft on them and they impose none on the app.
 
 ## Building
 
