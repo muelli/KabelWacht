@@ -1,5 +1,10 @@
 # KabelWacht
 
+[![CI](https://github.com/muelli/KabelWacht/actions/workflows/ci.yml/badge.svg)](https://github.com/muelli/KabelWacht/actions/workflows/ci.yml)
+[![Reproducible build](https://github.com/muelli/KabelWacht/actions/workflows/reproducible.yml/badge.svg)](https://github.com/muelli/KabelWacht/actions/workflows/reproducible.yml)
+[![REUSE status](https://api.reuse.software/badge/github.com/muelli/KabelWacht)](https://api.reuse.software/info/github.com/muelli/KabelWacht)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSES/AGPL-3.0-or-later.txt)
+
 A simple, fully **free-software** [WireGuard](https://www.wireguard.com/) VPN client
 for Android. It manages tunnel profiles and connects — nothing more.
 
@@ -7,7 +12,8 @@ for Android. It manages tunnel profiles and connects — nothing more.
 - **Import** a configuration by **scanning a QR code** or opening a **`.conf` file**.
 - **Connect/disconnect** with a per-tunnel switch (userspace backend, **no root**).
 - **No trackers, no analytics, no ads, no Google Play Services.** The only network
-  connection the app makes is your own WireGuard tunnel.
+  connection the app makes is your own WireGuard tunnel — see the
+  [privacy policy](docs/PRIVACY.md).
 - Ready to build on **F-Droid** and in **GitHub CI**.
 
 ## Free-software dependencies
