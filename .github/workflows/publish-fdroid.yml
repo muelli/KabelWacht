@@ -81,7 +81,7 @@ jobs:
         if: steps.gate.outputs.ready == 'true'
         run: |
           sudo apt-get update
-          sudo apt-get install -y apksigner libmagic1
+          sudo apt-get install -y apksigner libmagic1 qrencode
           pip install fdroidserver
 
       - name: Generate and publish repo
@@ -124,14 +124,28 @@ jobs:
           FP="$(keytool -list -v -keystore site/fdroid.p12 -storepass "$FDROID_KEYSTORE_PASS" -alias "$FDROID_KEY_ALIAS" \
                 | awk -F': ' '/SHA256:/{gsub(/:/,"",$2); print tolower($2); exit}')"
           REPO_URL="https://${GITHUB_REPOSITORY%/*}.github.io/${GITHUB_REPOSITORY#*/}/repo"
+          ADD_URL="${REPO_URL}?fingerprint=${FP}"
           touch site/.nojekyll
+
+          # QR code that F-Droid's "Add repository" scanner understands.
+          qrencode -o site/qr.png -s 8 -m 2 "$ADD_URL"
+
           cat > site/index.html <<EOF
-          <!doctype html><meta charset="utf-8"><title>KabelWacht F-Droid repo</title>
+          <!doctype html><meta charset="utf-8">
+          <title>KabelWacht F-Droid repo</title>
+          <style>
+            body{font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem;line-height:1.5}
+            code{word-break:break-all;background:#eee;padding:.1em .3em;border-radius:.2em}
+            img{image-rendering:pixelated;width:280px;height:280px;border:1px solid #ccc}
+            @media(prefers-color-scheme:dark){body{background:#111;color:#eee}code{background:#333}}
+          </style>
           <h1>KabelWacht F-Droid repository</h1>
-          <p>Add this repository in the F-Droid app:</p>
-          <p><code>${REPO_URL}</code></p>
-          <p>Fingerprint: <code>${FP}</code></p>
-          <p><a href="fdroidrepos:${REPO_URL}?fingerprint=${FP}">Tap here on your phone to add it</a></p>
+          <p>In the F-Droid app: <b>Settings → Repositories → +</b>, then scan this QR code:</p>
+          <p><img src="qr.png" alt="F-Droid repository QR code"></p>
+          <p>Or add it by hand:</p>
+          <p>URL: <code>${REPO_URL}</code><br>
+             Fingerprint: <code>${FP}</code></p>
+          <p><a href="fdroidrepos:${ADD_URL}">On your phone, tap here to add it directly.</a></p>
           EOF
 
           # Commit only the public, signed artifacts — never the config/keystore.
