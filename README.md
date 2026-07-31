@@ -27,7 +27,15 @@ copyleft on them and they impose none on the app.
 
 ## Building
 
-Requirements: JDK 17 and the Android SDK (compile/target SDK 35, min SDK 29).
+Requirements: JDK 17, the Android SDK (compile/target SDK 35, min SDK 29), plus the
+**NDK 27.2.12479018** and **CMake 3.22.1** (WireGuard is built from source, see below).
+Clone with submodules:
+
+```bash
+git clone --recursive https://github.com/muelli/KabelWacht
+# or, in an existing clone:
+git submodule update --init --recursive
+```
 
 ```bash
 ./gradlew assembleDebug          # debug APK -> app/build/outputs/apk/debug/
@@ -38,6 +46,28 @@ Requirements: JDK 17 and the Android SDK (compile/target SDK 35, min SDK 29).
 
 The wrapper pins Gradle; `local.properties` (with `sdk.dir=...`) is created
 automatically by Android Studio, or write it by hand. It is git-ignored.
+
+## WireGuard is built from source
+
+KabelWacht does **not** ship the prebuilt `com.wireguard.android:tunnel` AAR. The
+[`:tunnel`](tunnel/build.gradle.kts) module compiles the WireGuard tunnel library —
+including `libwg-go.so` (wireguard-go), `libwg.so` and `libwg-quick.so`
+(wireguard-tools) — from the pinned [`third_party/wireguard-android`](third_party)
+submodule via the NDK. Every binary in the APK is built here from source.
+
+## Reproducible builds
+
+The release build is **byte-for-byte reproducible**: the same source produces an
+identical APK regardless of build path or time (Go's `-trimpath`/`-buildid=`,
+`--build-id=none`, and `elf-cleaner` remove the usual sources of non-determinism).
+[`.github/workflows/reproducible.yml`](.github/workflows/reproducible.yml) enforces
+this on every tag by building twice from two independent checkouts and diffing the
+results. Verify locally:
+
+```bash
+./gradlew clean assembleRelease && sha256sum app/build/outputs/apk/release/*-unsigned.apk
+# clean and build again — the hash is identical
+```
 
 ## Project layout
 
