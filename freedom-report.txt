@@ -1,12 +1,12 @@
 KabelWacht — software-freedom report (versionCode 4)
-Generated 2026-07-31 20:25:14Z by GitHub Actions.
+Generated 2026-07-31 20:41:28Z by GitHub Actions.
 
 == F-Droid scanner (fdroidserver 2.4.5) ==
 Command: fdroid scanner --exit-code kabelwacht-4.apk
 Result: PASS — no known non-free classes, trackers, or extra signing blocks.
 
-    2026-07-31 20:25:10,595 INFO: Scanning APK with dexdump for known non-free classes.
-    2026-07-31 20:25:13,855 INFO: Scanning APK for extra signing blocks.
+    2026-07-31 20:41:26,124 INFO: Scanning APK with dexdump for known non-free classes.
+    2026-07-31 20:41:28,781 INFO: Scanning APK for extra signing blocks.
 
 == Bundled native libraries and their free-software origin ==
   libwg-go.so                            <- wireguard-go (MIT), built from source
