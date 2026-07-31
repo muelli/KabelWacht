@@ -92,6 +92,12 @@ jobs:
           # Keep only the signed APK as the release artifact.
           rm -f "$UNSIGNED" "$ALIGNED"
 
+      - name: Generate checksums
+        run: |
+          cd app/build/outputs/apk/release
+          sha256sum *.apk > SHA256SUMS
+          cat SHA256SUMS
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
@@ -99,3 +105,4 @@ jobs:
           generate_release_notes: ${{ steps.version.outputs.changelog == '' }}
           files: |
             app/build/outputs/apk/release/*.apk
+            app/build/outputs/apk/release/SHA256SUMS
