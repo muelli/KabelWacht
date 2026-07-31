@@ -25,10 +25,20 @@ path = [
     "README.md",
     "NOTICE",
     "SECURITY.md",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
+    "docs/**",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Tobias Mueller and KabelWacht contributors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+# The Code of Conduct is the Contributor Covenant, used under CC-BY-4.0.
+[[annotations]]
+path = ["CODE_OF_CONDUCT.md"]
+precedence = "override"
+SPDX-FileCopyrightText = "2014 Coraline Ada Ehmke and the Contributor Covenant contributors"
+SPDX-License-Identifier = "CC-BY-4.0"
 
 # The Gradle wrapper is vendored from Gradle and stays under its own license.
 [[annotations]]
