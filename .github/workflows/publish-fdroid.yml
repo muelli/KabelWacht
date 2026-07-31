@@ -130,6 +130,17 @@ jobs:
 
           cp "$SIGNED_APK" "site/fdroid/repo/kabelwacht-$CODE.apk"
 
+          # Feed the app's fastlane metadata (name, descriptions, icon) into the
+          # repo so the F-Droid client shows a proper listing instead of stubs.
+          APPID="com.github.muelli.kabelwacht"
+          FASTLANE="fastlane/metadata/android/en-US"
+          mkdir -p "site/fdroid/metadata/$APPID/en-US/images"
+          cp "$FASTLANE/title.txt"             "site/fdroid/metadata/$APPID/en-US/title.txt"
+          cp "$FASTLANE/short_description.txt" "site/fdroid/metadata/$APPID/en-US/short_description.txt"
+          cp "$FASTLANE/full_description.txt"  "site/fdroid/metadata/$APPID/en-US/full_description.txt"
+          cp "$FASTLANE/images/icon.png"       "site/fdroid/metadata/$APPID/en-US/images/icon.png"
+          cp -r "$FASTLANE/changelogs"         "site/fdroid/metadata/$APPID/en-US/" 2>/dev/null || true
+
           ( cd site/fdroid && fdroid update --create-metadata --verbose )
 
           # --- Software-freedom proof: F-Droid's own scanner (fails publish on any finding) ---
