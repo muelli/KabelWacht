@@ -134,6 +134,15 @@ jobs:
           # QR code that F-Droid's "Add repository" scanner understands.
           qrencode -o site/qr.png -s 8 -m 2 "$ADD_URL"
 
+          # Direct APK download links (newest first), for people without F-Droid.
+          APK_LIST=""
+          for apk in $(ls -1 site/fdroid/repo/*.apk 2>/dev/null | sort -Vr); do
+            name="$(basename "$apk")"
+            size="$(du -h "$apk" | cut -f1)"
+            label=""; [ "$name" = "kabelwacht-$CODE.apk" ] && label=" — latest"
+            APK_LIST="${APK_LIST}<li><a href=\"fdroid/repo/${name}\">${name}</a> (${size})${label}</li>"
+          done
+
           cat > site/index.html <<EOF
           <!doctype html><meta charset="utf-8">
           <title>KabelWacht F-Droid repo</title>
@@ -150,6 +159,10 @@ jobs:
           <p>URL: <code>${REPO_URL}</code><br>
              Fingerprint: <code>${FP}</code></p>
           <p><a href="fdroidrepos:${ADD_URL}">On your phone, tap here to add it directly.</a></p>
+          <h2>Direct download (without F-Droid)</h2>
+          <p>F-Droid is recommended so you get automatic updates. Otherwise download an
+             APK and install it (you may need to allow installing from unknown sources):</p>
+          <ul>${APK_LIST}</ul>
           EOF
 
           # Commit only the public, signed artifacts — never the config/keystore.
