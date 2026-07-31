@@ -28,3 +28,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "KabelWacht"
 include(":app")
+include(":tunnel")
