@@ -1,0 +1,7 @@
+# Defaults for nektos/act (https://github.com/nektos/act) so the Android workflows
+# run locally. The medium "act-latest" image has the tooling that
+# actions/setup-java and android-actions/setup-android need.
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# actions/upload-artifact@v4 needs an artifact server; point it at a temp dir.
+--artifact-server-path /tmp/act-artifacts

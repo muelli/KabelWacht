@@ -1,0 +1,23 @@
+KabelWacht is a minimal, fully free-software WireGuard® client for Android.
+
+It does one thing well: manage WireGuard tunnels and connect.
+
+Features:
+
+* Create, list, edit and delete WireGuard profiles.
+* Import a configuration by scanning a QR code.
+* Import a configuration from a .conf file.
+* One-tap connect/disconnect with a per-tunnel switch.
+* Userspace WireGuard backend — no root required.
+
+Privacy and freedom:
+
+* 100% free and open-source software (GPL-2.0-or-later).
+* No trackers, no analytics, no advertising.
+* No Google Play Services or other proprietary dependencies.
+* The only network connection made is your own WireGuard tunnel.
+
+Built on the official WireGuard tunnel library and the ZXing QR decoder.
+
+WireGuard is a registered trademark of Jason A. Donenfeld. This project is not
+officially affiliated with or endorsed by the WireGuard project.

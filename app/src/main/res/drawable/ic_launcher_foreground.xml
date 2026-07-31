@@ -1,0 +1,16 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Guard shield (KabelWacht = "cable guard") with a small keyhole. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,26 L78,36 L78,56 C78,72 68,82 54,88 C40,82 30,72 30,56 L30,36 Z" />
+    <path
+        android:fillColor="#2E6C4D"
+        android:pathData="M54,48 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+    <path
+        android:fillColor="#2E6C4D"
+        android:pathData="M51,52 L57,52 L59,68 L49,68 Z" />
+</vector>

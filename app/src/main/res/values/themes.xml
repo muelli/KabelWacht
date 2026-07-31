@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Base window theme used before Compose takes over. Compose (MaterialTheme) owns
+      all real styling, so this only needs to be a no-action-bar surface. A -night
+      variant provides the dark window background.
+    -->
+    <style name="Theme.KabelWacht" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

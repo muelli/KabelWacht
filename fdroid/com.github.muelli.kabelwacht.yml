@@ -1,0 +1,32 @@
+# Reference metadata for submitting KabelWacht to F-Droid.
+#
+# This file is a template for the maintainer to copy into the fdroiddata repository
+# (https://gitlab.com/fdroid/fdroiddata) under metadata/. It is NOT read from this
+# repo by F-Droid — inclusion happens via a merge request to fdroiddata.
+#
+# Adjust the URLs to the real repository location before submitting.
+
+Categories:
+  - Internet
+  - Security
+License: GPL-2.0-or-later
+AuthorName: Tobias Mueller
+SourceCode: https://github.com/muelli/kabelwacht
+IssueTracker: https://github.com/muelli/kabelwacht/issues
+Changelog: https://github.com/muelli/kabelwacht/releases
+
+RepoType: git
+Repo: https://github.com/muelli/kabelwacht.git
+
+Builds:
+  - versionName: '1'
+    versionCode: 1
+    commit: v1
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version v%c
+UpdateCheckMode: Tags
+CurrentVersion: '1'
+CurrentVersionCode: 1

@@ -1,0 +1,5 @@
+Initial release.
+
+* Create, list, edit and delete WireGuard tunnel profiles.
+* Import configurations by QR code or .conf file.
+* Connect/disconnect with a per-tunnel switch (userspace backend, no root).
