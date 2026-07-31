@@ -6,11 +6,13 @@ package com.github.muelli.kabelwacht.vpn
 import android.content.Context
 import android.content.Intent
 import android.net.VpnService
+import com.github.muelli.kabelwacht.data.SettingsStore
 import com.github.muelli.kabelwacht.data.TunnelProfile
 import com.wireguard.android.backend.Backend
 import com.wireguard.android.backend.GoBackend
 import com.wireguard.android.backend.Tunnel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +25,7 @@ import kotlinx.coroutines.withContext
  * v1 keeps at most one tunnel active at a time: bringing one up first tears down any
  * other. The name of the active tunnel is exposed as [activeTunnel] for the UI.
  */
-class TunnelManager(context: Context) {
+class TunnelManager(context: Context, private val settings: SettingsStore) {
 
     private val appContext = context.applicationContext
     private val backend: Backend = GoBackend(appContext)
@@ -33,6 +35,9 @@ class TunnelManager(context: Context) {
 
     private val _activeTunnel = MutableStateFlow<String?>(null)
     val activeTunnel: StateFlow<String?> = _activeTunnel.asStateFlow()
+
+    /** Name of the tunnel Android's always-on VPN feature will (re)connect, if set. */
+    val alwaysOnTunnel: Flow<String?> = settings.alwaysOnTunnel
 
     init {
         refreshActive()
@@ -63,6 +68,8 @@ class TunnelManager(context: Context) {
                 .forEach { running -> tunnels[running]?.let { bringDown(it) } }
         }
         backend.setState(tunnel, if (up) Tunnel.State.UP else Tunnel.State.DOWN, profile.config)
+        // Remember the most recently activated tunnel as the always-on target.
+        if (up) settings.setAlwaysOnTunnel(profile.name)
         refreshActive()
     }
 

@@ -7,6 +7,9 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 ## [Unreleased]
 
 ### Added
+- **Always-on VPN** support: Android can now (re)connect the most recently used
+  tunnel automatically via the system always-on VPN feature, including after a
+  reboot. A shield action opens the system VPN settings.
 - REUSE compliance, `SECURITY.md`, Gradle dependency verification, community-health
   docs, a privacy policy, and CI supply-chain hardening (SHA-pinned actions,
   Dependabot).

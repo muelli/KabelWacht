@@ -11,6 +11,9 @@ for Android. It manages tunnel profiles and connects — nothing more.
 - **Create, list, edit and delete** WireGuard profiles.
 - **Import** a configuration by **scanning a QR code** or opening a **`.conf` file**.
 - **Connect/disconnect** with a per-tunnel switch (userspace backend, **no root**).
+- **Always-on VPN** support: enable it from the shield action in the app (opens the
+  system VPN settings) and Android reconnects your most recently used tunnel
+  automatically — including after a reboot, and with the optional kill-switch.
 - **No trackers, no analytics, no ads, no Google Play Services.** The only network
   connection the app makes is your own WireGuard tunnel — see the
   [privacy policy](docs/PRIVACY.md).
