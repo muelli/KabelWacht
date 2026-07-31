@@ -42,6 +42,8 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          dependency-graph: disabled  # avoids classpath artifacts absent from verification-metadata
 
       - name: Build A
         run: ./a/gradlew -p a clean :app:assembleRelease --stacktrace
