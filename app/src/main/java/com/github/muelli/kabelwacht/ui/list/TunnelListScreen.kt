@@ -5,7 +5,9 @@ package com.github.muelli.kabelwacht.ui.list
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -21,6 +23,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.FileOpen
 import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -28,6 +31,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -71,6 +75,7 @@ fun TunnelListScreen(
 
     val profiles by viewModel.profiles.collectAsStateWithLifecycle()
     val activeTunnel by viewModel.activeTunnel.collectAsStateWithLifecycle()
+    val alwaysOnTunnel by viewModel.alwaysOnTunnel.collectAsStateWithLifecycle(initialValue = null)
     val message by viewModel.message.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -149,7 +154,21 @@ fun TunnelListScreen(
     var toDelete by remember { mutableStateOf<TunnelProfile?>(null) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.app_name)) },
+                actions = {
+                    IconButton(onClick = {
+                        runCatching { context.startActivity(Intent(Settings.ACTION_VPN_SETTINGS)) }
+                    }) {
+                        Icon(
+                            Icons.Outlined.Shield,
+                            contentDescription = stringResource(R.string.always_on_settings),
+                        )
+                    }
+                },
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             Box {
@@ -184,6 +203,7 @@ fun TunnelListScreen(
                     TunnelRow(
                         profile = profile,
                         isActive = activeTunnel == profile.name,
+                        isAlwaysOn = alwaysOnTunnel == profile.name,
                         onToggle = { up -> toggle(profile, up) },
                         onClick = { onEdit(profile.name) },
                         onEditClick = { onEdit(profile.name) },
@@ -238,6 +258,7 @@ private fun EmptyState(padding: PaddingValues) {
 private fun TunnelRow(
     profile: TunnelProfile,
     isActive: Boolean,
+    isAlwaysOn: Boolean,
     onToggle: (Boolean) -> Unit,
     onClick: () -> Unit,
     onEditClick: () -> Unit,
@@ -248,8 +269,13 @@ private fun TunnelRow(
         modifier = Modifier.clickable(onClick = onClick),
         headlineContent = { Text(profile.name) },
         supportingContent = {
+            val summary = profileSummary(profile)
             Text(
-                profileSummary(profile),
+                if (isAlwaysOn) {
+                    "$summary · ${stringResource(R.string.always_on_label)}"
+                } else {
+                    summary
+                },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
