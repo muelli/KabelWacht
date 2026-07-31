@@ -6,13 +6,22 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
 ## [Unreleased]
 
+## [3] — versionCode 3
+
 ### Added
 - **Always-on VPN** support: Android can now (re)connect the most recently used
   tunnel automatically via the system always-on VPN feature, including after a
   reboot. A shield action opens the system VPN settings.
+- App icon and full description in the F-Droid repository listing (editable icon
+  source lives in `artwork/icon.svg`).
+- Predictive back gesture.
 - REUSE compliance, `SECURITY.md`, Gradle dependency verification, community-health
   docs, a privacy policy, and CI supply-chain hardening (SHA-pinned actions,
   Dependabot).
+
+### Changed
+- Kotlin updated to 2.4.10; CI made faster and lighter (single-ABI PR builds,
+  Gradle configuration cache).
 
 ## [2] — versionCode 2
 
