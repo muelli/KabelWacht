@@ -53,14 +53,19 @@ android {
         }
     }
 
-    // Reuse the upstream sources and manifest (which declares GoBackend$VpnService).
-    sourceSets["main"].apply {
-        manifest.srcFile("$wg/src/main/AndroidManifest.xml")
-        java.setSrcDirs(listOf("$wg/src/main/java"))
-    }
-
     lint {
         disable += setOf("LongLogTag", "NewApi")
+    }
+}
+
+// Reuse the upstream sources and manifest (which declares GoBackend$VpnService).
+// Configured through the new-DSL extension type: the generated `android {}`
+// accessor still types sourceSets with AGP's legacy interface, which AGP 9's
+// source-set objects no longer implement (ClassCastException).
+configure<com.android.build.api.dsl.LibraryExtension> {
+    sourceSets.named("main") {
+        manifest.srcFile("$wg/src/main/AndroidManifest.xml")
+        java.setSrcDirs(listOf("$wg/src/main/java"))
     }
 }
 

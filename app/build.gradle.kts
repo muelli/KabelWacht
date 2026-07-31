@@ -1,9 +1,8 @@
 import java.util.Properties
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    // Kotlin support is built into AGP 9; no standalone kotlin-android plugin.
     alias(libs.plugins.compose.compiler)
 }
 
@@ -68,11 +67,7 @@ android {
     }
 }
 
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_17
-    }
-}
+// Kotlin jvmTarget defaults to android.compileOptions.targetCompatibility (17).
 
 dependencies {
     implementation(libs.androidx.core.ktx)
