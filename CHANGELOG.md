@@ -6,6 +6,13 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
 ## [Unreleased]
 
+## [4] — versionCode 4
+
+### Changed
+- Build toolchain upgraded to AGP 9.2.0 / Gradle 9.6.1 (built-in Kotlin);
+  reproducibility re-verified. Repository icon added to the F-Droid repo entry.
+  No functional changes.
+
 ## [3] — versionCode 3
 
 ### Added
