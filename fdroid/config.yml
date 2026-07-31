@@ -1,0 +1,16 @@
+# Non-secret configuration for the self-hosted F-Droid repository.
+#
+# The publish-fdroid workflow copies this file into the repo working directory and
+# then appends the signing settings (keystore path + passwords) from GitHub secrets
+# at build time. Those secret lines are NEVER committed.
+#
+# Update repo_url if you fork/rename the repository.
+
+repo_url: "https://muelli.github.io/KabelWacht/repo"
+repo_name: "KabelWacht"
+repo_description: >-
+  Personal F-Droid repository that publishes signed KabelWacht releases,
+  built automatically from tagged commits in CI.
+
+# Keep every published version available in the main repo (no separate archive).
+archive_older: 0

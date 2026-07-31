@@ -102,10 +102,49 @@ Docker).
 The repository is F-Droid-ready: FOSS-only dependencies, tagged releases, and
 [fastlane metadata](fastlane/metadata/android/en-US/) for the listing.
 
-Inclusion in the F-Droid catalogue is a separate step: submit a metadata recipe to
-[fdroiddata](https://gitlab.com/fdroid/fdroiddata). A ready-to-adapt template lives at
+Inclusion in the official F-Droid catalogue is a separate step: submit a metadata
+recipe to [fdroiddata](https://gitlab.com/fdroid/fdroiddata). A ready-to-adapt
+template lives at
 [`fdroid/com.github.muelli.kabelwacht.yml`](fdroid/com.github.muelli.kabelwacht.yml)
 (update the repository URLs first).
+
+### Self-hosted F-Droid repository (auto-published)
+
+You can also run your **own** F-Droid repository, hosted on GitHub Pages and updated
+automatically on every `vN` tag by
+[`.github/workflows/publish-fdroid.yml`](.github/workflows/publish-fdroid.yml). On a
+tag it builds and signs the APK, runs `fdroid update` to (re)generate the signed
+index, and pushes the result to a persistent `fdroid-repo` branch that Pages serves.
+
+An F-Droid repo needs **two** signing keys, both stored as GitHub Actions secrets and
+both kept stable forever:
+
+| Key | Signs | Secrets |
+| --- | --- | --- |
+| App (APK) key | the APK — its identity for updates | `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` |
+| Repo index key | the repo index — its fingerprint = repo identity | `FDROID_KEYSTORE_BASE64`, `FDROID_KEYSTORE_PASS`, `FDROID_KEY_PASS`, `FDROID_KEY_ALIAS` |
+
+**One-time setup:**
+
+1. Create the app signing key (if you don't have one) and set its four secrets.
+2. Create the repo index key and set its four secrets:
+
+   ```bash
+   FDROID_KEYSTORE_PASS='…' FDROID_KEY_PASS='…' scripts/fdroid-init.sh
+   ```
+
+   The script prints the base64 keystore, the secret names to set, and the repo
+   **fingerprint**.
+3. Confirm `repo_url` in [`fdroid/config.yml`](fdroid/config.yml) matches your Pages
+   URL (`https://<owner>.github.io/<repo>/repo`).
+4. Push a `vN` tag. The first run creates the `fdroid-repo` branch and tries to enable
+   Pages automatically; if it can't, set **Settings → Pages → Source: branch
+   `fdroid-repo` / (root)** once.
+
+After that, publishing is fully automatic. Users add your repo once — the workflow
+writes a landing page at `https://<owner>.github.io/<repo>/` with the URL,
+fingerprint, and a tap-to-add link. If secrets are absent the workflow logs a notice
+and skips, so it never breaks a tag push.
 
 ## Scope (v1)
 

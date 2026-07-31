@@ -1,0 +1,163 @@
+name: Publish F-Droid repo
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+# Push the generated repo to the fdroid-repo branch and (best-effort) enable Pages.
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      # Surfaced at job level so steps can gate on their presence.
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}          # app (APK) signing key
+      FDROID_KEYSTORE_BASE64: ${{ secrets.FDROID_KEYSTORE_BASE64 }}  # repo index key
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required secrets
+        id: gate
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$FDROID_KEYSTORE_BASE64" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Skipping F-Droid publish: set the app signing secrets (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD) and the repo secrets (FDROID_KEYSTORE_BASE64, FDROID_KEYSTORE_PASS, FDROID_KEY_PASS, FDROID_KEY_ALIAS). See scripts/fdroid-init.sh."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Read version
+        if: steps.gate.outputs.ready == 'true'
+        id: version
+        run: echo "code=$(grep -E '^versionCode=' version.properties | cut -d= -f2 | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 17
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        if: steps.gate.outputs.ready == 'true'
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        if: steps.gate.outputs.ready == 'true'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and sign release APK
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          ./gradlew assembleRelease --stacktrace
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/app.jks"
+          BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          CODE="${{ steps.version.outputs.code }}"
+          UNSIGNED="app/build/outputs/apk/release/app-release-unsigned.apk"
+          ALIGNED="$RUNNER_TEMP/kabelwacht-$CODE-aligned.apk"
+          SIGNED="$RUNNER_TEMP/kabelwacht-$CODE.apk"
+          "$BUILD_TOOLS/zipalign" -f 4 "$UNSIGNED" "$ALIGNED"
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks "$RUNNER_TEMP/app.jks" \
+            --ks-pass env:KEYSTORE_PASSWORD \
+            --ks-key-alias "$KEY_ALIAS" \
+            --key-pass env:KEY_PASSWORD \
+            --out "$SIGNED" "$ALIGNED"
+          echo "SIGNED_APK=$SIGNED" >> "$GITHUB_ENV"
+          # Ensure fdroid's tools (aapt/apksigner) are on PATH.
+          echo "$BUILD_TOOLS" >> "$GITHUB_PATH"
+
+      - name: Install fdroidserver
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apksigner libmagic1
+          pip install fdroidserver
+
+      - name: Generate and publish repo
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FDROID_KEYSTORE_PASS: ${{ secrets.FDROID_KEYSTORE_PASS }}
+          FDROID_KEY_PASS: ${{ secrets.FDROID_KEY_PASS }}
+          FDROID_KEY_ALIAS: ${{ secrets.FDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          CODE="${{ steps.version.outputs.code }}"
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          # Restore the persistent repo state (or start an orphan branch on first run).
+          if git ls-remote --exit-code --heads "$REMOTE" fdroid-repo >/dev/null 2>&1; then
+            git clone --depth 1 --branch fdroid-repo --single-branch "$REMOTE" site
+          else
+            git clone --depth 1 "$REMOTE" site
+            ( cd site && git checkout --orphan fdroid-repo && git rm -rf . >/dev/null 2>&1 || true )
+          fi
+          mkdir -p site/repo site/metadata
+
+          # Runtime-only config with the index signing key (never committed).
+          cp fdroid/config.yml site/config.yml
+          echo "$FDROID_KEYSTORE_BASE64" | base64 -d > site/fdroid.p12
+          cat >> site/config.yml <<EOF
+          sdk_path: "${ANDROID_HOME}"
+          keystore: "$(pwd)/site/fdroid.p12"
+          repo_keyalias: "${FDROID_KEY_ALIAS}"
+          keystorepass: "${FDROID_KEYSTORE_PASS}"
+          keypass: "${FDROID_KEY_PASS}"
+          EOF
+
+          cp "$SIGNED_APK" "site/repo/kabelwacht-$CODE.apk"
+
+          ( cd site && fdroid update --create-metadata --verbose )
+
+          # Compute the repo fingerprint for the landing page / add-repo link.
+          FP="$(keytool -list -v -keystore site/fdroid.p12 -storepass "$FDROID_KEYSTORE_PASS" -alias "$FDROID_KEY_ALIAS" \
+                | awk -F': ' '/SHA256:/{gsub(/:/,"",$2); print tolower($2); exit}')"
+          REPO_URL="https://${GITHUB_REPOSITORY%/*}.github.io/${GITHUB_REPOSITORY#*/}/repo"
+          touch site/.nojekyll
+          cat > site/index.html <<EOF
+          <!doctype html><meta charset="utf-8"><title>KabelWacht F-Droid repo</title>
+          <h1>KabelWacht F-Droid repository</h1>
+          <p>Add this repository in the F-Droid app:</p>
+          <p><code>${REPO_URL}</code></p>
+          <p>Fingerprint: <code>${FP}</code></p>
+          <p><a href="fdroidrepos:${REPO_URL}?fingerprint=${FP}">Tap here on your phone to add it</a></p>
+          EOF
+
+          # Commit only the public, signed artifacts — never the config/keystore.
+          cat > site/.gitignore <<'EOF'
+          config.yml
+          *.p12
+          *.jks
+          tmp/
+          EOF
+
+          cd site
+          git add -A
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m "Publish KabelWacht versionCode $CODE" || { echo "nothing to commit"; exit 0; }
+          git push "$REMOTE" HEAD:fdroid-repo
+
+      - name: Enable GitHub Pages (best-effort, first run only)
+        if: steps.gate.outputs.ready == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" \
+            -d '{"source":{"branch":"fdroid-repo","path":"/"}}' \
+            && echo "Pages enabled." || echo "Pages already enabled or must be enabled manually."

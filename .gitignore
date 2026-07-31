@@ -15,4 +15,6 @@ captures/
 # Signing / secrets — never commit these
 *.jks
 *.keystore
+*.p12
+*.b64
 keystore.properties
