@@ -56,6 +56,8 @@ jobs:
       - name: Set up Gradle
         if: steps.gate.outputs.ready == 'true'
         uses: gradle/actions/setup-gradle@v4
+        with:
+          dependency-graph: disabled  # avoids classpath artifacts absent from verification-metadata
 
       - name: Build and sign release APK
         if: steps.gate.outputs.ready == 'true'

@@ -32,6 +32,10 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          # Don't inject the dependency-graph plugin — it adds artifacts to the
+          # build classpath that aren't in gradle/verification-metadata.xml.
+          dependency-graph: disabled
 
       - name: Lint, test and assemble debug APK
         run: ./gradlew lint testDebugUnitTest assembleDebug --stacktrace
