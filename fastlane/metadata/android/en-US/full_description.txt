@@ -12,7 +12,7 @@ Features:
 
 Privacy and freedom:
 
-* 100% free and open-source software (GPL-2.0-or-later).
+* 100% free and open-source software (AGPL-3.0-or-later).
 * No trackers, no analytics, no advertising.
 * No Google Play Services or other proprietary dependencies.
 * The only network connection made is your own WireGuard tunnel.

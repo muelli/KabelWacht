@@ -1,0 +1,43 @@
+KabelWacht
+Copyright (C) 2026 Tobias Mueller and KabelWacht contributors
+
+This program is free software: you can redistribute it and/or modify it under the
+terms of the GNU Affero General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
+See the LICENSE file for the full text.
+
+This product bundles the following third-party components, each under its own
+license. These licenses are compatible with AGPL-3.0-or-later.
+
+--------------------------------------------------------------------------------
+com.wireguard.android:tunnel  (WireGuard tunnel library + wg-quick config parser)
+  Copyright (C) 2017-2026 WireGuard LLC
+  License: Apache License 2.0
+  Source: https://git.zx2c4.com/wireguard-android/
+
+wireguard-go  (libwg-go.so — userspace WireGuard implementation)
+  Copyright (C) 2017-2026 WireGuard LLC
+  License: MIT
+  Source: https://git.zx2c4.com/wireguard-go/
+
+wireguard-tools  (libwg.so / libwg-quick.so — the wg and wg-quick programs, invoked
+  by the app as separate subprocesses)
+  Copyright (C) 2015-2026 Jason A. Donenfeld
+  License: GNU General Public License, version 2
+  Source: https://git.zx2c4.com/wireguard-tools/
+
+com.journeyapps:zxing-android-embedded  (QR code scanning)
+  License: Apache License 2.0
+  Source: https://github.com/journeyapps/zxing-android-embedded
+
+ZXing ("Zebra Crossing") core
+  License: Apache License 2.0
+  Source: https://github.com/zxing/zxing
+
+AndroidX / Jetpack Compose / Material Components / Kotlin standard library
+  Copyright (C) The Android Open Source Project / JetBrains
+  License: Apache License 2.0
+--------------------------------------------------------------------------------
+
+"WireGuard" is a registered trademark of Jason A. Donenfeld. KabelWacht is not
+officially affiliated with or endorsed by the WireGuard project.
