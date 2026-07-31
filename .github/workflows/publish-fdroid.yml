@@ -183,40 +183,11 @@ jobs:
           # QR code that F-Droid's "Add repository" scanner understands.
           qrencode -o site/qr.png -s 8 -m 2 "$ADD_URL"
 
-          # Direct APK download links (newest first), for people without F-Droid.
-          APK_LIST=""
-          for apk in $(ls -1 site/fdroid/repo/*.apk 2>/dev/null | sort -Vr); do
-            name="$(basename "$apk")"
-            size="$(du -h "$apk" | cut -f1)"
-            label=""; [ "$name" = "kabelwacht-$CODE.apk" ] && label=" — latest"
-            APK_LIST="${APK_LIST}<li><a href=\"fdroid/repo/${name}\">${name}</a> (${size})${label}</li>"
-          done
-
-          cat > site/index.html <<EOF
-          <!doctype html><meta charset="utf-8">
-          <title>KabelWacht F-Droid repo</title>
-          <style>
-            body{font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem;line-height:1.5}
-            code{word-break:break-all;background:#eee;padding:.1em .3em;border-radius:.2em}
-            img{image-rendering:pixelated;width:280px;height:280px;border:1px solid #ccc}
-            @media(prefers-color-scheme:dark){body{background:#111;color:#eee}code{background:#333}}
-          </style>
-          <h1>KabelWacht F-Droid repository</h1>
-          <p>In the F-Droid app: <b>Settings → Repositories → +</b>, then scan this QR code:</p>
-          <p><img src="qr.png" alt="F-Droid repository QR code"></p>
-          <p>Or add it by hand:</p>
-          <p>URL: <code>${REPO_URL}</code><br>
-             Fingerprint: <code>${FP}</code></p>
-          <p><a href="fdroidrepos:${ADD_URL}">On your phone, tap here to add it directly.</a></p>
-          <h2>Direct download (without F-Droid)</h2>
-          <p>F-Droid is recommended so you get automatic updates. Otherwise download an
-             APK and install it (you may need to allow installing from unknown sources):</p>
-          <ul>${APK_LIST}</ul>
-          <h2>Software freedom</h2>
-          <p>This build passed <b>fdroid scanner</b> — F-Droid's own scanner for known
-             non-free libraries, trackers, and tampered signing blocks — with no
-             findings. <a href="freedom-report.txt">Read the full freedom report.</a></p>
-          EOF
+          # Landing page: rendered from the committed template (fdroid/landing.html).
+          # It lists the repo's apps (icon, description, versions, downloads, search)
+          # client-side from index-v2.json, so it stays current automatically.
+          sed -e "s|{{REPO_URL}}|${REPO_URL}|g" -e "s|{{FINGERPRINT}}|${FP}|g" \
+              fdroid/landing.html > site/index.html
 
           # Commit only the public, signed artifacts — never the config/keystore.
           cat > site/.gitignore <<'EOF'
