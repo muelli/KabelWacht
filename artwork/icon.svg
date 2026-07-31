@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-FileCopyrightText: 2026 Tobias Mueller and KabelWacht contributors
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+KabelWacht icon — EDITABLE SOURCE.
+
+This SVG is the canonical source of the app artwork. The same shapes exist in two
+generated/derived places; keep them in sync when editing:
+  - fastlane/metadata/android/en-US/images/icon.png  (F-Droid listing icon;
+    regenerate with scripts/render-icon.sh)
+  - app/src/main/res/drawable/ic_launcher_foreground.xml (adaptive launcher
+    foreground; same paths on a 108x108 viewport, foreground drawn in white)
+
+The viewBox uses the Android adaptive-icon 108x108 grid; content stays inside the
+central 66x66 safe zone so launcher masks don't clip it.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 108 108">
+  <!-- Background: WireGuard-ish guard green (matches ic_launcher_background). -->
+  <rect width="108" height="108" fill="#2E6C4D"/>
+  <!-- Guard shield (KabelWacht = "cable guard"). -->
+  <path fill="#FFFFFF" d="M54,26 L78,36 L78,56 C78,72 68,82 54,88 C40,82 30,72 30,56 L30,36 Z"/>
+  <!-- Keyhole. -->
+  <circle cx="54" cy="48" r="6" fill="#2E6C4D"/>
+  <path fill="#2E6C4D" d="M51,52 L57,52 L59,68 L49,68 Z"/>
+</svg>
