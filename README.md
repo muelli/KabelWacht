@@ -136,7 +136,8 @@ both kept stable forever:
    The script prints the base64 keystore, the secret names to set, and the repo
    **fingerprint**.
 3. Confirm `repo_url` in [`fdroid/config.yml`](fdroid/config.yml) matches your Pages
-   URL (`https://<owner>.github.io/<repo>/repo`).
+   URL (`https://<owner>.github.io/<repo>/fdroid/repo`). Serving under `/fdroid/repo`
+   lets plain `https://` links open F-Droid directly.
 4. Push a `vN` tag. The first run creates the `fdroid-repo` branch and tries to enable
    Pages automatically; if it can't, set **Settings → Pages → Source: branch
    `fdroid-repo` / (root)** once.

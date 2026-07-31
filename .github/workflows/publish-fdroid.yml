@@ -103,27 +103,31 @@ jobs:
             git clone --depth 1 "$REMOTE" site
             ( cd site && git checkout --orphan fdroid-repo && git rm -rf . >/dev/null 2>&1 || true )
           fi
-          mkdir -p site/repo site/metadata
+          # Remove any previous root-level repo layout (migrated to /fdroid/repo).
+          rm -rf site/repo site/metadata site/archive
+
+          # Serve the repo under /fdroid/repo so plain https links auto-open F-Droid.
+          mkdir -p site/fdroid/repo site/fdroid/metadata
 
           # Runtime-only config with the index signing key (never committed).
-          cp fdroid/config.yml site/config.yml
-          echo "$FDROID_KEYSTORE_BASE64" | base64 -d > site/fdroid.p12
-          cat >> site/config.yml <<EOF
+          cp fdroid/config.yml site/fdroid/config.yml
+          echo "$FDROID_KEYSTORE_BASE64" | base64 -d > site/fdroid/fdroid.p12
+          cat >> site/fdroid/config.yml <<EOF
           sdk_path: "${ANDROID_HOME}"
-          keystore: "$(pwd)/site/fdroid.p12"
+          keystore: "$(pwd)/site/fdroid/fdroid.p12"
           repo_keyalias: "${FDROID_KEY_ALIAS}"
           keystorepass: "${FDROID_KEYSTORE_PASS}"
           keypass: "${FDROID_KEY_PASS}"
           EOF
 
-          cp "$SIGNED_APK" "site/repo/kabelwacht-$CODE.apk"
+          cp "$SIGNED_APK" "site/fdroid/repo/kabelwacht-$CODE.apk"
 
-          ( cd site && fdroid update --create-metadata --verbose )
+          ( cd site/fdroid && fdroid update --create-metadata --verbose )
 
           # Compute the repo fingerprint for the landing page / add-repo link.
-          FP="$(keytool -list -v -keystore site/fdroid.p12 -storepass "$FDROID_KEYSTORE_PASS" -alias "$FDROID_KEY_ALIAS" \
+          FP="$(keytool -list -v -keystore site/fdroid/fdroid.p12 -storepass "$FDROID_KEYSTORE_PASS" -alias "$FDROID_KEY_ALIAS" \
                 | awk -F': ' '/SHA256:/{gsub(/:/,"",$2); print tolower($2); exit}')"
-          REPO_URL="https://${GITHUB_REPOSITORY%/*}.github.io/${GITHUB_REPOSITORY#*/}/repo"
+          REPO_URL="https://${GITHUB_REPOSITORY%/*}.github.io/${GITHUB_REPOSITORY#*/}/fdroid/repo"
           ADD_URL="${REPO_URL}?fingerprint=${FP}"
           touch site/.nojekyll
 

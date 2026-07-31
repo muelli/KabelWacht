@@ -6,7 +6,7 @@
 #
 # Update repo_url if you fork/rename the repository.
 
-repo_url: "https://muelli.github.io/KabelWacht/repo"
+repo_url: "https://muelli.github.io/KabelWacht/fdroid/repo"
 repo_name: "KabelWacht"
 repo_description: >-
   Personal F-Droid repository that publishes signed KabelWacht releases,
