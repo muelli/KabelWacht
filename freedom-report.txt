@@ -1,15 +1,16 @@
-KabelWacht — software-freedom report (versionCode 2)
-Generated 2026-07-31 15:20:09Z by GitHub Actions.
+KabelWacht — software-freedom report (versionCode 3)
+Generated 2026-07-31 15:43:31Z by GitHub Actions.
 
 == F-Droid scanner (fdroidserver 2.4.5) ==
-Command: fdroid scanner --exit-code kabelwacht-2.apk
+Command: fdroid scanner --exit-code kabelwacht-3.apk
 Result: PASS — no known non-free classes, trackers, or extra signing blocks.
 
-    2026-07-31 15:20:07,853 INFO: Scanning APK with dexdump for known non-free classes.
-    2026-07-31 15:20:09,298 INFO: Scanning APK for extra signing blocks.
+    2026-07-31 15:43:29,905 INFO: Scanning APK with dexdump for known non-free classes.
+    2026-07-31 15:43:31,212 INFO: Scanning APK for extra signing blocks.
 
 == Bundled native libraries and their free-software origin ==
-  libwg.so, libwg-go.so, libwg-quick.so  <- com.wireguard.android:tunnel (GPL-2.0, wireguard-go)
+  libwg-go.so                            <- wireguard-go (MIT), built from source
+  libwg.so, libwg-quick.so               <- wireguard-tools (GPL-2.0), built from source
   libandroidx.graphics.path.so           <- androidx.graphics:graphics-path (Apache-2.0)
   libdatastore_shared_counter.so         <- androidx.datastore (Apache-2.0)
 
