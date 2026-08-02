@@ -116,9 +116,9 @@ Pushing the `vN` tag triggers [`release.yml`](.github/workflows/release.yml), wh
 - publishes a GitHub Release whose notes come from the fastlane changelog
   `changelogs/N.txt` (falling back to auto-generated notes if it's missing).
 
-Signing is optional via the repository secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`,
-`KEY_ALIAS`, `KEY_PASSWORD`. Without them the release APK is published unsigned
-(F-Droid rebuilds and signs from source anyway).
+Signing is optional via the `APP_SIGNING_SEED` secret (see [Signing](#signing)).
+Without it the release APK is published unsigned (F-Droid rebuilds and signs from
+source anyway).
 
 ## Continuous integration
 
@@ -159,25 +159,30 @@ automatically on every `vN` tag by
 tag it builds and signs the APK, runs `fdroid update` to (re)generate the signed
 index, and pushes the result to a persistent `fdroid-repo` branch that Pages serves.
 
-An F-Droid repo needs **two** signing keys, both stored as GitHub Actions secrets and
-both kept stable forever:
+### Signing
 
-| Key | Signs | Secrets |
-| --- | --- | --- |
-| App (APK) key | the APK — its identity for updates | `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` |
-| Repo index key | the repo index — its fingerprint = repo identity | `FDROID_KEYSTORE_BASE64`, `FDROID_KEYSTORE_PASS`, `FDROID_KEY_PASS`, `FDROID_KEY_ALIAS` |
+Two signing identities exist — the **app key** (the APK's identity for updates) and
+the **repo index key** (its fingerprint *is* the repository's identity) — and each is
+driven entirely by **one high-entropy seed string** stored as a GitHub Actions
+secret. [`scripts/derive-signing-key.py`](scripts/derive-signing-key.py)
+deterministically derives the EC P-256 private key, keystore, alias, and passphrase
+from the seed; the public certificates are pinned in [`signing/`](signing/). The
+derivation is a versioned contract: **the seed is the key** — back it up like one,
+and never change the derivation for existing seeds.
 
 **One-time setup:**
 
-1. Create the app signing key (if you don't have one) and set its four secrets.
-2. Create the repo index key and set its four secrets:
+1. Generate two seeds (e.g. `openssl rand -base64 48`), save each in your password
+   manager — **the seed is the key; losing it means losing the identity** — then:
 
    ```bash
-   FDROID_KEYSTORE_PASS='…' FDROID_KEY_PASS='…' scripts/fdroid-init.sh
+   gh secret set APP_SIGNING_SEED     # paste the first seed at the hidden prompt
+   gh secret set FDROID_SIGNING_SEED  # paste the second
    ```
-
-   The script prints the base64 keystore, the secret names to set, and the repo
-   **fingerprint**.
+2. Run the **Bootstrap signing certificates** workflow once (Actions →
+   *Bootstrap signing certificates* → Run). It derives both identities, and opens a
+   PR adding the public certificates under `signing/` — merge it. The run summary
+   shows the certificate fingerprints.
 3. Confirm `repo_url` in [`fdroid/config.yml`](fdroid/config.yml) matches your Pages
    URL (`https://<owner>.github.io/<repo>/fdroid/repo`). Serving under `/fdroid/repo`
    lets plain `https://` links open F-Droid directly.
@@ -187,8 +192,8 @@ both kept stable forever:
 
 After that, publishing is fully automatic. Users add your repo once — the workflow
 writes a landing page at `https://<owner>.github.io/<repo>/` with the URL,
-fingerprint, and a tap-to-add link. If secrets are absent the workflow logs a notice
-and skips, so it never breaks a tag push.
+fingerprint, and a tap-to-add link. If the seeds are absent the workflow logs a
+notice and skips, so it never breaks a tag push.
 
 ## Scope (v1)
 
