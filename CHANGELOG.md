@@ -6,6 +6,15 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
 ## [Unreleased]
 
+## [5] — versionCode 5
+
+### Changed
+- **Signing keys rotated**: both the APK signing key and the repository index
+  key are now EC P-256 identities derived from single seed secrets
+  (`scripts/derive-signing-key.py`); public certificates are pinned in
+  `signing/`. One-time: uninstall the old app, remove and re-add the
+  repository (new fingerprint), reinstall.
+
 ## [4] — versionCode 4
 
 ### Changed
