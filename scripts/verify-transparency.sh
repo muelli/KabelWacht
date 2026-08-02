@@ -29,6 +29,12 @@ trap 'rm -rf "$work"' EXIT
 fail=0
 say() { printf '%s\n' "$*"; }
 
+if ! gh attestation --help >/dev/null 2>&1; then
+  say "ERROR: your gh CLI lacks the 'attestation' command (needs gh >= 2.49)."
+  say "Install a current GitHub CLI from https://cli.github.com/ and retry."
+  exit 2
+fi
+
 say "==> Fetching live index from $BASE"
 curl -fsS "$BASE/index-v2.json" -o "$work/index-v2.json"
 curl -fsS "$BASE/entry.jar" -o "$work/entry.jar"
