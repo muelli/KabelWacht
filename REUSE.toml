@@ -13,6 +13,8 @@ path = [
     "scripts/**",
     "fastlane/**",
     "fdroid/**",
+    "signing/**",
+    "artwork/**",
     "gradle/libs.versions.toml",
     "gradle/verification-metadata.xml",
     "build.gradle.kts",

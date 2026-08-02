@@ -16,9 +16,12 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     env:
-      # Surfaced at job level so steps can gate on their presence.
-      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}          # app (APK) signing key
-      FDROID_KEYSTORE_BASE64: ${{ secrets.FDROID_KEYSTORE_BASE64 }}  # repo index key
+      # Surfaced at job level so steps can gate on their presence. Each seed
+      # deterministically drives the entire signing identity (key, keystore,
+      # alias, passphrase) via scripts/derive-signing-key.py; the public
+      # certificates live in signing/.
+      APP_SIGNING_SEED: ${{ secrets.APP_SIGNING_SEED }}        # app (APK) signing
+      FDROID_SIGNING_SEED: ${{ secrets.FDROID_SIGNING_SEED }}  # repo index signing
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -28,9 +31,9 @@ jobs:
       - name: Check required secrets
         id: gate
         run: |
-          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$FDROID_KEYSTORE_BASE64" ]; then
+          if [ -z "$APP_SIGNING_SEED" ] || [ -z "$FDROID_SIGNING_SEED" ]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Skipping F-Droid publish: set the app signing secrets (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD) and the repo secrets (FDROID_KEYSTORE_BASE64, FDROID_KEYSTORE_PASS, FDROID_KEY_PASS, FDROID_KEY_ALIAS). See scripts/fdroid-init.sh."
+            echo "::warning::Skipping F-Droid publish: set the APP_SIGNING_SEED and FDROID_SIGNING_SEED secrets (one high-entropy string each; see README 'Signing')."
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
@@ -64,14 +67,13 @@ jobs:
 
       - name: Build and sign release APK
         if: steps.gate.outputs.ready == 'true'
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           set -euo pipefail
+          pip install --quiet cryptography
           ./gradlew assembleRelease --stacktrace
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/app.jks"
+          APP_PASS="$(SEED="$APP_SIGNING_SEED" scripts/derive-signing-key.py app "$RUNNER_TEMP/app.p12")"
+          echo "::add-mask::$APP_PASS"
+          export APP_PASS
           BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
           CODE="${{ steps.version.outputs.code }}"
           UNSIGNED="app/build/outputs/apk/release/app-release-unsigned.apk"
@@ -79,10 +81,9 @@ jobs:
           SIGNED="$RUNNER_TEMP/kabelwacht-$CODE.apk"
           "$BUILD_TOOLS/zipalign" -f 4 "$UNSIGNED" "$ALIGNED"
           "$BUILD_TOOLS/apksigner" sign \
-            --ks "$RUNNER_TEMP/app.jks" \
-            --ks-pass env:KEYSTORE_PASSWORD \
-            --ks-key-alias "$KEY_ALIAS" \
-            --key-pass env:KEY_PASSWORD \
+            --ks "$RUNNER_TEMP/app.p12" \
+            --ks-pass env:APP_PASS \
+            --ks-key-alias app \
             --out "$SIGNED" "$ALIGNED"
           echo "SIGNED_APK=$SIGNED" >> "$GITHUB_ENV"
           # Ensure fdroid's tools (aapt/apksigner) are on PATH.
@@ -99,9 +100,6 @@ jobs:
         if: steps.gate.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FDROID_KEYSTORE_PASS: ${{ secrets.FDROID_KEYSTORE_PASS }}
-          FDROID_KEY_PASS: ${{ secrets.FDROID_KEY_PASS }}
-          FDROID_KEY_ALIAS: ${{ secrets.FDROID_KEY_ALIAS }}
         run: |
           set -euo pipefail
           CODE="${{ steps.version.outputs.code }}"
@@ -120,15 +118,17 @@ jobs:
           # Serve the repo under /fdroid/repo so plain https links auto-open F-Droid.
           mkdir -p site/fdroid/repo site/fdroid/metadata
 
-          # Runtime-only config with the index signing key (never committed).
+          # Runtime-only config with the index signing key, derived from the seed
+          # (never committed).
+          FDROID_PASS="$(SEED="$FDROID_SIGNING_SEED" scripts/derive-signing-key.py fdroid site/fdroid/fdroid.p12)"
+          echo "::add-mask::$FDROID_PASS"
           cp fdroid/config.yml site/fdroid/config.yml
-          echo "$FDROID_KEYSTORE_BASE64" | base64 -d > site/fdroid/fdroid.p12
           cat >> site/fdroid/config.yml <<EOF
           sdk_path: "${ANDROID_HOME}"
           keystore: "$(pwd)/site/fdroid/fdroid.p12"
-          repo_keyalias: "${FDROID_KEY_ALIAS}"
-          keystorepass: "${FDROID_KEYSTORE_PASS}"
-          keypass: "${FDROID_KEY_PASS}"
+          repo_keyalias: "fdroid"
+          keystorepass: "${FDROID_PASS}"
+          keypass: "${FDROID_PASS}"
           EOF
 
           cp "$SIGNED_APK" "site/fdroid/repo/kabelwacht-$CODE.apk"
@@ -193,7 +193,7 @@ jobs:
           } > site/freedom-report.txt
 
           # Compute the repo fingerprint for the landing page / add-repo link.
-          FP="$(keytool -list -v -keystore site/fdroid/fdroid.p12 -storepass "$FDROID_KEYSTORE_PASS" -alias "$FDROID_KEY_ALIAS" \
+          FP="$(keytool -list -v -keystore site/fdroid/fdroid.p12 -storepass "$FDROID_PASS" -alias fdroid \
                 | awk -F': ' '/SHA256:/{gsub(/:/,"",$2); print tolower($2); exit}')"
           REPO_URL="https://${GITHUB_REPOSITORY%/*}.github.io/${GITHUB_REPOSITORY#*/}/fdroid/repo"
           ADD_URL="${REPO_URL}?fingerprint=${FP}"
