@@ -7,6 +7,10 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 ## [Unreleased]
 
 ### Added
+- The tunnel editor now shows structured **Interface** and **Peer** sections
+  (typed fields, masked keys, add/remove peers, one-tap key generation); the
+  full wg-quick text remains available in a collapsed "Raw configuration"
+  expander, kept in two-way sync.
 - Export a tunnel to a standard wg-quick `.conf` file, gated by device
   authentication (the file contains the private key), with guidance that
   enrolling another device freshly beats transferring credentials.
