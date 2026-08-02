@@ -9,7 +9,9 @@ A simple, fully **free-software** [WireGuard](https://www.wireguard.com/) VPN cl
 for Android. It manages tunnel profiles and connects — nothing more.
 
 - **Create, list, edit and delete** WireGuard profiles.
-- **Import** a configuration by **scanning a QR code** or opening a **`.conf` file**.
+- **Import** a configuration by **scanning a QR code** or opening a **`.conf` file**;
+  **export** a tunnel back to a standard wg-quick `.conf` (guarded by device
+  authentication — the file contains the private key).
 - **Connect/disconnect** with a per-tunnel switch (userspace backend, **no root**).
 - **Always-on VPN** support: enable it from the shield action in the app (opens the
   system VPN settings) and Android reconnects your most recently used tunnel

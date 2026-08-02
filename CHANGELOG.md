@@ -6,6 +6,11 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
 ## [Unreleased]
 
+### Added
+- Export a tunnel to a standard wg-quick `.conf` file, gated by device
+  authentication (the file contains the private key), with guidance that
+  enrolling another device freshly beats transferring credentials.
+
 ## [5] — versionCode 5
 
 ### Changed
