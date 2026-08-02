@@ -15,7 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Surfaced at job level so it can be used in the signing step's `if:` check.
-      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      # The seed deterministically drives the whole signing identity (key,
+      # keystore, alias, passphrase) via scripts/derive-signing-key.py.
+      APP_SIGNING_SEED: ${{ secrets.APP_SIGNING_SEED }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -68,18 +70,18 @@ jobs:
       - name: Assemble release APK
         run: ./gradlew assembleRelease --stacktrace
 
-      # Optional signing: only runs when the repository defines the signing secrets.
+      # Optional signing: only runs when the signing seed is configured.
       # F-Droid rebuilds and signs from source, so an unsigned APK is still a valid
       # release artifact for that channel.
       - name: Sign APK
         id: sign
-        if: ${{ env.KEYSTORE_BASE64 != '' }}
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        if: ${{ env.APP_SIGNING_SEED != '' }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/keystore.jks"
+          set -euo pipefail
+          pip install --quiet cryptography
+          APP_PASS="$(SEED="$APP_SIGNING_SEED" scripts/derive-signing-key.py app "$RUNNER_TEMP/app.p12")"
+          echo "::add-mask::$APP_PASS"
+          export APP_PASS
           BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
           DIR="app/build/outputs/apk/release"
           UNSIGNED="$DIR/app-release-unsigned.apk"
@@ -87,10 +89,9 @@ jobs:
           SIGNED="$DIR/kabelwacht-${{ steps.version.outputs.code }}.apk"
           "$BUILD_TOOLS/zipalign" -f 4 "$UNSIGNED" "$ALIGNED"
           "$BUILD_TOOLS/apksigner" sign \
-            --ks "$RUNNER_TEMP/keystore.jks" \
-            --ks-pass env:KEYSTORE_PASSWORD \
-            --ks-key-alias "$KEY_ALIAS" \
-            --key-pass env:KEY_PASSWORD \
+            --ks "$RUNNER_TEMP/app.p12" \
+            --ks-pass env:APP_PASS \
+            --ks-key-alias app \
             --out "$SIGNED" "$ALIGNED"
           # Keep only the signed APK as the release artifact.
           rm -f "$UNSIGNED" "$ALIGNED"
