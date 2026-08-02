@@ -37,6 +37,7 @@ jobs:
           TITLE="Transparency check FAILED: published repo does not match CI-built artifacts"
           # Don't stack duplicates while an alarm is already open.
           if [ -z "$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number')" ]; then
+            gh label create security --color B60205 2>/dev/null || true  # must exist for --label
             gh issue create --title "$TITLE" --label security --body \
               "The scheduled transparency monitor found that the live published repository does not match what CI built and logged in the Sigstore transparency log (or the append-only branch history). Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
