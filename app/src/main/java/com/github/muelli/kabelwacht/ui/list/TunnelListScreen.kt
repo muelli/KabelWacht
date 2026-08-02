@@ -59,6 +59,7 @@ import com.github.muelli.kabelwacht.R
 import com.github.muelli.kabelwacht.appContainer
 import com.github.muelli.kabelwacht.data.TunnelProfile
 import com.github.muelli.kabelwacht.ui.AppViewModelProvider
+import com.github.muelli.kabelwacht.util.confirmDeviceCredential
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 
@@ -150,6 +151,41 @@ fun TunnelListScreen(
         }
     }
 
+    // --- Export (wg-quick format): warning dialog -> device auth -> SAF write ---
+    var toExport by remember { mutableStateOf<TunnelProfile?>(null) }
+    var pendingExport by remember { mutableStateOf<TunnelProfile?>(null) }
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("text/plain"),
+    ) { uri ->
+        val profile = pendingExport
+        pendingExport = null
+        if (uri != null && profile != null) {
+            val ok = runCatching {
+                context.contentResolver.openOutputStream(uri)?.bufferedWriter()
+                    ?.use { it.write(profile.config.toWgQuickString()) }
+                    ?: error("no stream")
+            }.isSuccess
+            viewModel.showMessage(
+                if (ok) context.getString(R.string.export_done, profile.name)
+                else context.getString(R.string.export_failed),
+            )
+        }
+    }
+    fun exportAfterAuth(profile: TunnelProfile) {
+        confirmDeviceCredential(
+            context,
+            context.getString(R.string.export_auth_title),
+            context.getString(R.string.export_auth_subtitle, profile.name),
+        ) { authenticated ->
+            if (authenticated) {
+                pendingExport = profile
+                exportLauncher.launch("${profile.name}.conf")
+            } else {
+                viewModel.showMessage(context.getString(R.string.export_auth_failed))
+            }
+        }
+    }
+
     var addMenuOpen by remember { mutableStateOf(false) }
     var toDelete by remember { mutableStateOf<TunnelProfile?>(null) }
 
@@ -207,12 +243,30 @@ fun TunnelListScreen(
                         onToggle = { up -> toggle(profile, up) },
                         onClick = { onEdit(profile.name) },
                         onEditClick = { onEdit(profile.name) },
+                        onExportClick = { toExport = profile },
                         onDeleteClick = { toDelete = profile },
                     )
                     HorizontalDivider()
                 }
             }
         }
+    }
+
+    toExport?.let { profile ->
+        AlertDialog(
+            onDismissRequest = { toExport = null },
+            title = { Text(stringResource(R.string.export_warning_title)) },
+            text = { Text(stringResource(R.string.export_warning_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    toExport = null
+                    exportAfterAuth(profile)
+                }) { Text(stringResource(R.string.export_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { toExport = null }) { Text(stringResource(R.string.cancel)) }
+            },
+        )
     }
 
     toDelete?.let { profile ->
@@ -262,6 +316,7 @@ private fun TunnelRow(
     onToggle: (Boolean) -> Unit,
     onClick: () -> Unit,
     onEditClick: () -> Unit,
+    onExportClick: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -291,6 +346,10 @@ private fun TunnelRow(
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.edit)) },
                             onClick = { menuOpen = false; onEditClick() },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.export)) },
+                            onClick = { menuOpen = false; onExportClick() },
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.delete)) },
