@@ -81,12 +81,21 @@ fi
 say "==> 4/4 Checking APK signing certificate"
 APKSIGNER="$(command -v apksigner || ls "${ANDROID_HOME:-/nonexistent}"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1 || true)"
 if [ -n "$APKSIGNER" ]; then
-  got="$("$APKSIGNER" verify --print-certs "$work/$APK_NAME" \
-        | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')"
-  if [ "$got" = "$CERT_SHA256" ]; then
-    say "    OK: signing certificate matches the pinned digest"
-  else
-    say "    FAIL: signing certificate is $got, expected $CERT_SHA256"; fail=1
+  certs="$("$APKSIGNER" verify --print-certs "$work/$APK_NAME" 2>&1)" || {
+    say "    FAIL: apksigner rejected the APK signature:"; say "$certs"; fail=1; certs=""; }
+  if [ -n "$certs" ]; then
+    # Tolerate format variations across apksigner versions: take the first
+    # certificate SHA-256 digest line and extract the hex digest.
+    got="$(printf '%s\n' "$certs" | grep -im1 'certificate SHA-256 digest' \
+           | grep -oE '[0-9a-f]{64}' | head -1 || true)"
+    if [ "$got" = "$CERT_SHA256" ]; then
+      say "    OK: signing certificate matches the pinned digest"
+    elif [ -z "$got" ]; then
+      say "    FAIL: could not parse a certificate digest from apksigner output:"
+      say "$certs"; fail=1
+    else
+      say "    FAIL: signing certificate is $got, expected $CERT_SHA256"; fail=1
+    fi
   fi
 else
   say "    SKIP: apksigner not found (install Android build-tools to check)"
