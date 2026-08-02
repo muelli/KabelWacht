@@ -15,6 +15,25 @@
     <string name="new_tunnel_title">New tunnel</string>
     <string name="edit_tunnel_title">Edit tunnel</string>
     <string name="field_name">Name</string>
+    <string name="section_interface">Interface</string>
+    <string name="section_peer">Peer</string>
+    <string name="section_peer_n">Peer %1$d</string>
+    <string name="field_private_key">Private key</string>
+    <string name="field_addresses">Addresses</string>
+    <string name="field_dns">DNS</string>
+    <string name="field_listen_port">Listen port</string>
+    <string name="field_mtu">MTU</string>
+    <string name="field_public_key">Public key</string>
+    <string name="field_preshared_key">Preshared key (optional)</string>
+    <string name="field_endpoint">Endpoint</string>
+    <string name="field_allowed_ips">Allowed IPs</string>
+    <string name="field_keepalive">Persistent keepalive (seconds)</string>
+    <string name="add_peer">Add peer</string>
+    <string name="remove_peer">Remove peer</string>
+    <string name="generate_key">Generate a new key</string>
+    <string name="toggle_secret_visibility">Show or hide</string>
+    <string name="raw_title">Raw configuration</string>
+    <string name="raw_subtitle">The complete wg-quick file — closing this section applies it to the fields above.</string>
     <string name="field_config">WireGuard configuration</string>
     <string name="field_config_hint">[Interface]\nPrivateKey = …\nAddress = 10.0.0.2/32\nDNS = 1.1.1.1\n\n[Peer]\nPublicKey = …\nEndpoint = host:51820\nAllowedIPs = 0.0.0.0/0</string>
     <string name="save">Save</string>
