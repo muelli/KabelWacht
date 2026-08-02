@@ -9,6 +9,8 @@ on:
 permissions:
   contents: write
   pages: write
+  id-token: write      # Sigstore keyless signing (binary transparency)
+  attestations: write  # store the provenance attestations
 
 jobs:
   publish:
@@ -220,6 +222,19 @@ jobs:
               -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
               commit -m "Publish KabelWacht versionCode $CODE" || { echo "nothing to commit"; exit 0; }
           git push "$REMOTE" HEAD:fdroid-repo
+
+      # Binary transparency: log the published APK and the signed repo index
+      # (entry.jar) in the public Sigstore transparency log. Attesting the index
+      # is what makes a split-view repo (different index for different users)
+      # detectable. Verify with:
+      #   gh attestation verify <file> --repo ${{ github.repository }}
+      - name: Attest published artifacts
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4
+        with:
+          subject-path: |
+            site/fdroid/repo/kabelwacht-${{ steps.version.outputs.code }}.apk
+            site/fdroid/repo/entry.jar
 
       - name: Enable GitHub Pages (best-effort, first run only)
         if: steps.gate.outputs.ready == 'true'
