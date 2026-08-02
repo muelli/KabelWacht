@@ -35,4 +35,15 @@
     <!-- Always-on VPN -->
     <string name="always_on_settings">Always-on VPN settings</string>
     <string name="always_on_label">Always-on</string>
+
+    <!-- Export -->
+    <string name="export">Export</string>
+    <string name="export_warning_title">Export tunnel configuration?</string>
+    <string name="export_warning_message">The exported file contains this tunnel\'s private key in plain text.\n\nA WireGuard identity is normally not meant to be shared: instead of transferring credentials to another device or person, it is safer to enroll them freshly with their own key and configuration.\n\nExport only for your own backup, and store the file somewhere safe.</string>
+    <string name="export_confirm">Export anyway</string>
+    <string name="export_auth_title">Confirm it\'s you</string>
+    <string name="export_auth_subtitle">Exporting "%1$s" includes its private key</string>
+    <string name="export_done">Tunnel "%1$s" exported.</string>
+    <string name="export_failed">Could not write the export file.</string>
+    <string name="export_auth_failed">Authentication was cancelled — nothing was exported.</string>
 </resources>
