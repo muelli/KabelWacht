@@ -76,7 +76,8 @@ class EditTunnelViewModel(
     private var extraInterfaceLines: List<String> = emptyList()
 
     /** Name of the profile being edited, or null when creating/importing. */
-    private var originalName: String? = null
+    // Compose state so the title updates once start() resolves the profile.
+    private var originalName by mutableStateOf<String?>(null)
     private var initialized = false
 
     val isEditing: Boolean get() = originalName != null
