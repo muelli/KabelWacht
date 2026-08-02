@@ -142,6 +142,7 @@ jobs:
           cp "$FASTLANE/short_description.txt" "site/fdroid/metadata/$APPID/en-US/short_description.txt"
           cp "$FASTLANE/full_description.txt"  "site/fdroid/metadata/$APPID/en-US/full_description.txt"
           cp "$FASTLANE/images/icon.png"       "site/fdroid/metadata/$APPID/en-US/images/icon.png"
+          cp -r "$FASTLANE/images/phoneScreenshots" "site/fdroid/metadata/$APPID/en-US/images/" 2>/dev/null || true
           cp -r "$FASTLANE/changelogs"         "site/fdroid/metadata/$APPID/en-US/" 2>/dev/null || true
 
           # Repository icon (shown in the client's repository list; also used as a
@@ -152,20 +153,38 @@ jobs:
           ( cd site/fdroid && fdroid update --create-metadata --verbose )
 
           # fdroidserver sometimes indexes localized graphics under hashed names
-          # (icon_<hash>.png) without writing the file under that name, 404ing the
-          # icon for clients and the landing page. Make every indexed graphic path
-          # actually exist by copying the plain file to the referenced name.
+          # (icon_<hash>.png) without writing the file under that name, 404ing them
+          # for clients and the landing page. Make every indexed graphic (icon and
+          # screenshots) actually exist: match a missing reference to a sibling file
+          # with the same sha256 and copy it to the referenced name.
           python3 - <<'PY'
-          import json, os, shutil
+          import hashlib, json, os, shutil
           repo = "site/fdroid/repo"
           idx = json.load(open(f"{repo}/index-v2.json"))
+
+          def ensure(entry):
+              ref = repo + entry["name"]
+              if os.path.exists(ref):
+                  return
+              d = os.path.dirname(ref)
+              for cand in os.listdir(d) if os.path.isdir(d) else []:
+                  path = os.path.join(d, cand)
+                  if os.path.isfile(path) and hashlib.sha256(
+                      open(path, "rb").read()
+                  ).hexdigest() == entry.get("sha256"):
+                      shutil.copy(path, ref)
+                      print(f"restored indexed graphic: {entry['name']}")
+                      return
+              print(f"::warning::indexed graphic missing: {entry['name']}")
+
           for appid, pkg in idx.get("packages", {}).items():
-              for entry in (pkg.get("metadata", {}).get("icon") or {}).values():
-                  ref = repo + entry["name"]
-                  plain = os.path.join(os.path.dirname(ref), "icon.png")
-                  if not os.path.exists(ref) and os.path.exists(plain):
-                      shutil.copy(plain, ref)
-                      print(f"restored indexed icon path: {entry['name']}")
+              md = pkg.get("metadata", {})
+              for entry in (md.get("icon") or {}).values():
+                  ensure(entry)
+              for kind in (md.get("screenshots") or {}).values():
+                  for entries in kind.values():
+                      for entry in entries:
+                          ensure(entry)
           PY
 
           # --- Software-freedom proof: F-Droid's own scanner (fails publish on any finding) ---
