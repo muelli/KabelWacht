@@ -128,9 +128,8 @@ self-contained: no external scripts, styles, fonts, or trackers.
 </main>
 
 <footer>
-  <p>Every APK is built from public source code; this build passed F-Droid's
-     scanner for non-free components with no findings —
-     <a href="freedom-report.txt">read the freedom report</a>.</p>
+  <p>Every APK is built from public source code and passes F-Droid's scanner for
+     non-free components — each app links its freedom report above.</p>
   <p><strong>Don't trust, verify:</strong> builds are reproducible and every
      release is recorded in the public Sigstore transparency log —
      <a href="https://github.com/muelli/KabelWacht/blob/main/docs/TRANSPARENCY.md">how
@@ -192,6 +191,13 @@ self-contained: no external scripts, styles, fonts, or trackers.
         };
       }).sort(function (a, b) { return a.name.localeCompare(b.name); });
 
+      // A search bar for a handful of apps is noise; show it only once the
+      // repository is big enough for filtering to help.
+      if (apps.length < 4) {
+        document.querySelector(".search").hidden = true;
+        countEl.hidden = true;
+      }
+
       function render(filter) {
         var f = (filter || "").trim().toLowerCase();
         var shown = apps.filter(function (a) {
@@ -227,7 +233,8 @@ self-contained: no external scripts, styles, fonts, or trackers.
                         + " (" + fmtSize(v.file.size) + ") — "
                         + '<a href="' + esc(REPO + v.file.name) + '">APK</a></li>';
                     }).join("") + "</ul></details>" : "")
-            + '<p class="meta">Package: <code>' + esc(a.id) + "</code></p>"
+            + '<p class="meta">Package: <code>' + esc(a.id) + "</code> · "
+            + '<a href="freedom-report-' + esc(a.id) + '.txt">freedom report</a></p>'
             + "</div></article>";
         }).join("") || "<p>No apps match your search.</p>";
         countEl.textContent = shown.length === apps.length
