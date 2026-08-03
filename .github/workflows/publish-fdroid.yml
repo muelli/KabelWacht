@@ -188,29 +188,40 @@ jobs:
                           ensure(entry)
           PY
 
-          # --- Software-freedom proof: F-Droid's own scanner (fails publish on any finding) ---
+          # --- Software-freedom proof: F-Droid's own scanner, per app (fails the
+          # publish on any finding). Each app gets freedom-report-<appid>.txt,
+          # linked from its card on the landing page. ---
           FDROID_VER="$(fdroid --version 2>&1 | head -1)"
-          fdroid scanner --exit-code "$SIGNED_APK" 2>&1 | tee scan.out
-          {
-            echo "KabelWacht — software-freedom report (versionCode $CODE)"
-            echo "Generated $(date -u '+%Y-%m-%d %H:%M:%SZ') by GitHub Actions."
-            echo
-            echo "== F-Droid scanner (fdroidserver $FDROID_VER) =="
-            echo "Command: fdroid scanner --exit-code kabelwacht-$CODE.apk"
-            echo "Result: PASS — no known non-free classes, trackers, or extra signing blocks."
-            echo
-            sed 's/^/    /' scan.out
-            echo
-            echo "== Bundled native libraries and their free-software origin =="
-            echo "  libwg-go.so                            <- wireguard-go (MIT), built from source"
-            echo "  libwg.so, libwg-quick.so               <- wireguard-tools (GPL-2.0), built from source"
-            echo "  libandroidx.graphics.path.so           <- androidx.graphics:graphics-path (Apache-2.0)"
-            echo "  libdatastore_shared_counter.so         <- androidx.datastore (Apache-2.0)"
-            echo
-            unzip -l "$SIGNED_APK" | awk '/\.so$/{print "    "$4"  ("$1" bytes)"}'
-            echo
-            echo "App license: GPL-2.0-or-later. All dependencies are free software (see README)."
-          } > site/freedom-report.txt
+          python3 - <<'PY' > apps.list
+          import json
+          idx = json.load(open("site/fdroid/repo/index-v2.json"))
+          for appid, pkg in idx.get("packages", {}).items():
+              best = max(pkg["versions"].values(), key=lambda v: v["manifest"]["versionCode"])
+              name = (pkg["metadata"].get("name") or {}).get("en-US", appid)
+              print(appid, "site/fdroid/repo" + best["file"]["name"],
+                    best["manifest"]["versionCode"], name.replace(" ", "_"))
+          PY
+          while read -r APPID APK VC APPNAME; do
+            fdroid scanner --exit-code "$APK" 2>&1 | tee scan.out
+            {
+              echo "${APPNAME//_/ } ($APPID) — software-freedom report (versionCode $VC)"
+              echo "Generated $(date -u '+%Y-%m-%d %H:%M:%SZ') by GitHub Actions."
+              echo
+              echo "== F-Droid scanner (fdroidserver $FDROID_VER) =="
+              echo "Command: fdroid scanner --exit-code $(basename "$APK")"
+              echo "Result: PASS — no known non-free classes, trackers, or extra signing blocks."
+              echo
+              sed 's/^/    /' scan.out
+              echo
+              echo "== Bundled native libraries =="
+              unzip -l "$APK" | awk '/\.so$/{print "    "$4"  ("$1" bytes)"}'
+              echo
+              echo "All code is built from public source; licensing is documented in the"
+              echo "project repository (LICENSE, NOTICE): https://github.com/${GITHUB_REPOSITORY}"
+            } > "site/freedom-report-$APPID.txt"
+          done < apps.list
+          # Keep the historical URL working (single-app era).
+          cp "site/freedom-report-com.github.muelli.kabelwacht.txt" site/freedom-report.txt 2>/dev/null || true
 
           # Compute the repo fingerprint for the landing page / add-repo link.
           FP="$(keytool -list -v -keystore site/fdroid/fdroid.p12 -storepass "$FDROID_PASS" -alias fdroid \
