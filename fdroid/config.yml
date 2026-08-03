@@ -12,5 +12,10 @@ repo_description: >-
   Personal F-Droid repository that publishes signed KabelWacht releases,
   built automatically from tagged commits in CI.
 
+# Repository icon (shown by clients for the repo itself). The publish workflow
+# places the KabelWacht shield at this path, next to this config; without it
+# fdroid update generates a QR-code placeholder.
+repo_icon: icon.png
+
 # Keep every published version available in the main repo (no separate archive).
 archive_older: 0
