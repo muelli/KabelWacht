@@ -145,10 +145,11 @@ jobs:
           cp -r "$FASTLANE/images/phoneScreenshots" "site/fdroid/metadata/$APPID/en-US/images/" 2>/dev/null || true
           cp -r "$FASTLANE/changelogs"         "site/fdroid/metadata/$APPID/en-US/" 2>/dev/null || true
 
-          # Repository icon (shown in the client's repository list; also used as a
-          # fallback). Without it fdroid update generates a placeholder.
-          mkdir -p site/fdroid/repo/icons
-          cp "$FASTLANE/images/icon.png" site/fdroid/repo/icons/icon.png
+          # Repository icon source: fdroid update reads config's repo_icon relative
+          # to the fdroid dir and installs it into repo/icons/ itself. (Copying
+          # into repo/icons/ directly does NOT work — update overwrites it with a
+          # QR-code placeholder when the configured source file is missing.)
+          cp "$FASTLANE/images/icon.png" site/fdroid/icon.png
 
           ( cd site/fdroid && fdroid update --create-metadata --verbose )
 
