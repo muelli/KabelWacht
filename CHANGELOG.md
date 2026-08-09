@@ -4,7 +4,7 @@ All notable changes to KabelWacht are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Per-release notes shown
 in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
-## [Unreleased]
+## [6] — versionCode 6
 
 ### Added
 - The tunnel editor now shows structured **Interface** and **Peer** sections
@@ -14,6 +14,11 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 - Export a tunnel to a standard wg-quick `.conf` file, gated by device
   authentication (the file contains the private key), with guidance that
   enrolling another device freshly beats transferring credentials.
+- Phone screenshots in the F-Droid listing (and, small, on the repository's
+  landing page).
+
+### Fixed
+- The editor title no longer stays "New tunnel" when editing an existing one.
 
 ## [5] — versionCode 5
 
