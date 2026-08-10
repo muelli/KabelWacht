@@ -142,6 +142,15 @@ assembleDebug`). Full emulation uses [`act`](https://github.com/nektos/act) with
 settings in [`.actrc`](.actrc); install it with e.g. `brew install act` (needs
 Docker).
 
+### Regenerating the store screenshots
+
+The phone screenshots in the F-Droid listing are produced by
+[`scripts/screenshots.sh`](scripts/screenshots.sh): it builds the app, boots a
+headless emulator (creating the `shots` AVD on first run), stages a demo tunnel,
+and captures the list, editor, and add-menu into
+`fastlane/metadata/android/en-US/images/phoneScreenshots/`. Needs the Android
+emulator + the `android-35` x86_64 system image and a JDK 17.
+
 ## F-Droid
 
 The repository is F-Droid-ready: FOSS-only dependencies, tagged releases, and
