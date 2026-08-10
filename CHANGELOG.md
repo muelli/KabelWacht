@@ -11,6 +11,7 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
   name (`wg-tunnel-1`, `wg-tunnel-2`, …).
 - All user-visible strings are now translatable resources; `CONTRIBUTING.md`
   explains how to contribute a language.
+- A little easter egg in the tunnel list.
 
 ### Changed
 - Importing a configuration (QR or file) that exactly matches a stored tunnel

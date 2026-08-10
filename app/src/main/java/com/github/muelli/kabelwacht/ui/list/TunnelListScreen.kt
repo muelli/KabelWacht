@@ -7,10 +7,13 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.SystemClock
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -200,7 +203,7 @@ fun TunnelListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
+                title = { EasterEggTitle() },
                 actions = {
                     IconButton(onClick = {
                         runCatching { context.startActivity(Intent(Settings.ACTION_VPN_SETTINGS)) }
@@ -294,6 +297,41 @@ fun TunnelListScreen(
         )
     }
 }
+
+/**
+ * The app title, with a small easter egg: five quick taps in a row toast the
+ * app version. No ripple, so nothing hints at it.
+ */
+@Composable
+private fun EasterEggTitle() {
+    val context = LocalContext.current
+    var taps by remember { mutableStateOf(0) }
+    var lastTap by remember { mutableStateOf(0L) }
+    Text(
+        stringResource(R.string.app_name),
+        modifier = Modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+        ) {
+            val now = SystemClock.uptimeMillis()
+            taps = if (now - lastTap <= TAP_WINDOW_MS) taps + 1 else 1
+            lastTap = now
+            if (taps >= EASTER_EGG_TAPS) {
+                taps = 0
+                val version = context.packageManager
+                    .getPackageInfo(context.packageName, 0).versionName
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.version_toast, version),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+        },
+    )
+}
+
+private const val EASTER_EGG_TAPS = 5
+private const val TAP_WINDOW_MS = 2000L
 
 @Composable
 private fun EmptyState(padding: PaddingValues) {

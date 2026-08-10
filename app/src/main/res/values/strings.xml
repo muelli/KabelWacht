@@ -10,6 +10,7 @@
     <string name="create_blank">Create manually</string>
     <string name="more_actions">More actions</string>
     <string name="empty_title">No tunnels yet</string>
+    <string name="version_toast">KabelWacht v%1$s</string>
     <string name="empty_subtitle">Tap + to scan a QR code, import a .conf file, or create a tunnel manually.</string>
     <string name="no_endpoint">No endpoint configured</string>
     <string name="error_tunnel_state">Could not change tunnel state</string>
