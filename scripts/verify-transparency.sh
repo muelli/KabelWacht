@@ -22,7 +22,7 @@ set -euo pipefail
 REPO_SLUG="${REPO_SLUG:-muelli/KabelWacht}"
 BASE="${BASE:-https://muelli.github.io/KabelWacht/fdroid/repo}"
 # SHA-256 of the APK signing certificate (see docs/TRANSPARENCY.md).
-CERT_SHA256="${CERT_SHA256:-70dbd684ec0bce8d51d394fa7189c6584fd7bec290d5b447482eca8a64b601a9}"
+CERT_SHA256="${CERT_SHA256:-8f02760a5c600a686c7ff452521c7a4be9f8ced922cdc7f9fc639b068625c289}"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT

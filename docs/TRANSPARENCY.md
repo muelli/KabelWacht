@@ -49,7 +49,7 @@ the stronger the guarantee.
 All published APKs are signed by a certificate with this SHA-256 digest:
 
 ```
-70dbd684ec0bce8d51d394fa7189c6584fd7bec290d5b447482eca8a64b601a9
+8f02760a5c600a686c7ff452521c7a4be9f8ced922cdc7f9fc639b068625c289
 ```
 
 Check it on any APK with `apksigner verify --print-certs <apk>`, or on-device
