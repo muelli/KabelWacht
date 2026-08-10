@@ -48,6 +48,17 @@ reports, translations, and documentation are all welcome.
 - Make sure `assembleDebug`, `testDebugUnitTest`, `lint`, and `reuse lint` pass.
 - Describe what and why in the PR; link any related issue.
 
+## Translations
+
+All user-visible text lives in
+[`app/src/main/res/values/strings.xml`](app/src/main/res/values/strings.xml)
+(everything there is translatable unless marked `translatable="false"`).
+To add a language, copy it to `values-<code>/strings.xml` (e.g. `values-de/`)
+and translate the entries — a plain pull request is all it takes. Missing
+entries automatically fall back to English, so partial translations are
+welcome. The F-Droid store listing can be translated too: copy
+`fastlane/metadata/android/en-US/` to a sibling locale directory.
+
 ## Reporting bugs and security issues
 
 - Regular bugs: open a [GitHub issue](https://github.com/muelli/KabelWacht/issues)

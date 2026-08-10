@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">KabelWacht</string>
+    <string name="app_name" translatable="false">KabelWacht</string>
 
     <!-- List screen -->
     <string name="add_tunnel">Add tunnel</string>
@@ -11,6 +11,8 @@
     <string name="more_actions">More actions</string>
     <string name="empty_title">No tunnels yet</string>
     <string name="empty_subtitle">Tap + to scan a QR code, import a .conf file, or create a tunnel manually.</string>
+    <string name="no_endpoint">No endpoint configured</string>
+    <string name="error_tunnel_state">Could not change tunnel state</string>
 
     <!-- Edit screen -->
     <string name="new_tunnel_title">New tunnel</string>
@@ -18,6 +20,11 @@
     <string name="field_name">Name</string>
     <string name="section_interface">Interface</string>
     <string name="section_peer">Peer</string>
+    <string name="error_name_required">Name is required</string>
+    <string name="error_name_invalid">Use 1–15 chars: letters, digits, and _=+.-</string>
+    <string name="error_name_taken">A tunnel named "%1$s" already exists</string>
+    <string name="error_invalid_config">Invalid WireGuard configuration</string>
+    <string name="error_config_unreadable">Could not read configuration</string>
     <string name="section_peer_n">Peer %1$d</string>
     <string name="field_private_key">Private key</string>
     <string name="field_addresses">Addresses</string>

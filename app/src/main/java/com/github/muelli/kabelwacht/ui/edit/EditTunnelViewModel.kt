@@ -9,8 +9,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.github.muelli.kabelwacht.AppContainer
+import com.github.muelli.kabelwacht.R
 import com.github.muelli.kabelwacht.data.ConfigStore
 import com.github.muelli.kabelwacht.data.TunnelRepository
+import com.github.muelli.kabelwacht.ui.UiMessage
 import com.wireguard.android.backend.Tunnel
 import com.wireguard.config.BadConfigException
 import com.wireguard.config.Config
@@ -44,9 +46,9 @@ class EditTunnelViewModel(
 
     var name by mutableStateOf("")
         private set
-    var nameError by mutableStateOf<String?>(null)
+    var nameError by mutableStateOf<UiMessage?>(null)
         private set
-    var configError by mutableStateOf<String?>(null)
+    var configError by mutableStateOf<UiMessage?>(null)
         private set
 
     // Interface section.
@@ -103,7 +105,7 @@ class EditTunnelViewModel(
                 // Not parseable (yet): fall back to the raw editor so nothing is lost.
                 rawText = text
                 rawExpanded = true
-                configError = e.message ?: "Invalid WireGuard configuration"
+                configError = parseError(e)
             }
         }
         // New profiles (blank or imported) start with a free auto-generated name.
@@ -143,7 +145,7 @@ class EditTunnelViewModel(
                 rawExpanded = false
                 configError = null
             } catch (e: Exception) {
-                configError = e.message ?: "Invalid WireGuard configuration"
+                configError = parseError(e)
             }
         }
     }
@@ -152,15 +154,15 @@ class EditTunnelViewModel(
     fun save(): Boolean {
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) {
-            nameError = "Name is required"
+            nameError = UiMessage(R.string.error_name_required)
             return false
         }
         if (Tunnel.isNameInvalid(trimmedName)) {
-            nameError = "Use 1–15 chars: letters, digits, and _=+.-"
+            nameError = UiMessage(R.string.error_name_invalid)
             return false
         }
         if (trimmedName != originalName && repository.exists(trimmedName)) {
-            nameError = "A tunnel named \"$trimmedName\" already exists"
+            nameError = UiMessage(R.string.error_name_taken, trimmedName)
             return false
         }
 
@@ -168,10 +170,10 @@ class EditTunnelViewModel(
         val config = try {
             ConfigStore.parse(text)
         } catch (e: BadConfigException) {
-            configError = e.message ?: "Invalid WireGuard configuration"
+            configError = parseError(e)
             return false
         } catch (e: Exception) {
-            configError = e.message ?: "Could not read configuration"
+            configError = e.message?.let(::UiMessage) ?: UiMessage(R.string.error_config_unreadable)
             return false
         }
 
@@ -183,6 +185,10 @@ class EditTunnelViewModel(
         }
         return true
     }
+
+    /** The parser's own message is technical pass-through; only the fallback is ours. */
+    private fun parseError(e: Exception): UiMessage =
+        e.message?.let(::UiMessage) ?: UiMessage(R.string.error_invalid_config)
 
     private fun fillFormFrom(config: Config) {
         val itf = config.getInterface()

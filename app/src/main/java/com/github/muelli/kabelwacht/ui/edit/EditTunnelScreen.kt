@@ -103,13 +103,13 @@ fun EditTunnelScreen(
                 label = { Text(stringResource(R.string.field_name)) },
                 singleLine = true,
                 isError = viewModel.nameError != null,
-                supportingText = viewModel.nameError?.let { { Text(it) } },
+                supportingText = viewModel.nameError?.let { { Text(it.resolve()) } },
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
                 modifier = Modifier.fillMaxWidth(),
             )
 
             viewModel.configError?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                Text(it.resolve(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
 
             // ----- [Interface] -----

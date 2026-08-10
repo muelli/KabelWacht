@@ -59,6 +59,7 @@ import com.github.muelli.kabelwacht.R
 import com.github.muelli.kabelwacht.appContainer
 import com.github.muelli.kabelwacht.data.TunnelProfile
 import com.github.muelli.kabelwacht.ui.AppViewModelProvider
+import com.github.muelli.kabelwacht.ui.UiMessage
 import com.github.muelli.kabelwacht.util.confirmDeviceCredential
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
@@ -86,7 +87,7 @@ fun TunnelListScreen(
     fun receiveImport(raw: String) {
         val duplicate = viewModel.duplicateOf(raw)
         if (duplicate != null) {
-            viewModel.showMessage(context.getString(R.string.import_duplicate, duplicate))
+            viewModel.showMessage(UiMessage(R.string.import_duplicate, duplicate))
         } else {
             container.pendingImport = raw
             onImport()
@@ -101,7 +102,7 @@ fun TunnelListScreen(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
         if (granted) scanLauncher.launch(qrScanOptions(context.getString(R.string.scan_qr_prompt)))
-        else viewModel.showMessage(context.getString(R.string.camera_permission_required))
+        else viewModel.showMessage(UiMessage(R.string.camera_permission_required))
     }
     fun startScan() {
         val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
@@ -118,7 +119,7 @@ fun TunnelListScreen(
             val text = runCatching {
                 context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
             }.getOrNull()
-            if (text.isNullOrBlank()) viewModel.showMessage(context.getString(R.string.file_read_failed))
+            if (text.isNullOrBlank()) viewModel.showMessage(UiMessage(R.string.file_read_failed))
             else receiveImport(text)
         }
     }
@@ -133,7 +134,7 @@ fun TunnelListScreen(
         if (result.resultCode == Activity.RESULT_OK && profile != null) {
             viewModel.setActive(profile, up = true)
         } else {
-            viewModel.showMessage(context.getString(R.string.vpn_permission_required))
+            viewModel.showMessage(UiMessage(R.string.vpn_permission_required))
         }
     }
     fun toggle(profile: TunnelProfile, up: Boolean) {
@@ -150,8 +151,9 @@ fun TunnelListScreen(
         }
     }
 
-    message?.let { text ->
-        androidx.compose.runtime.LaunchedEffect(text) {
+    message?.let { msg ->
+        val text = msg.resolve()
+        androidx.compose.runtime.LaunchedEffect(msg) {
             snackbarHostState.showSnackbar(text)
             viewModel.clearMessage()
         }
@@ -172,8 +174,8 @@ fun TunnelListScreen(
                     ?: error("no stream")
             }.isSuccess
             viewModel.showMessage(
-                if (ok) context.getString(R.string.export_done, profile.name)
-                else context.getString(R.string.export_failed),
+                if (ok) UiMessage(R.string.export_done, profile.name)
+                else UiMessage(R.string.export_failed),
             )
         }
     }
@@ -187,7 +189,7 @@ fun TunnelListScreen(
                 pendingExport = profile
                 exportLauncher.launch("${profile.name}.conf")
             } else {
-                viewModel.showMessage(context.getString(R.string.export_auth_failed))
+                viewModel.showMessage(UiMessage(R.string.export_auth_failed))
             }
         }
     }
@@ -330,7 +332,7 @@ private fun TunnelRow(
         modifier = Modifier.clickable(onClick = onClick),
         headlineContent = { Text(profile.name) },
         supportingContent = {
-            val summary = profileSummary(profile)
+            val summary = profileEndpoint(profile) ?: stringResource(R.string.no_endpoint)
             Text(
                 if (isAlwaysOn) {
                     "$summary · ${stringResource(R.string.always_on_label)}"
@@ -368,11 +370,9 @@ private fun TunnelRow(
     )
 }
 
-/** One-line summary: the first peer's endpoint, or a hint if none is set. */
-private fun profileSummary(profile: TunnelProfile): String {
-    val endpoint = profile.config.peers.firstOrNull()?.endpoint?.orElse(null)
-    return endpoint?.toString() ?: "No endpoint configured"
-}
+/** One-line summary: the first peer's endpoint, or null if none is set. */
+private fun profileEndpoint(profile: TunnelProfile): String? =
+    profile.config.peers.firstOrNull()?.endpoint?.orElse(null)?.toString()
 
 private fun qrScanOptions(prompt: String) = ScanOptions().apply {
     setDesiredBarcodeFormats(ScanOptions.QR_CODE)

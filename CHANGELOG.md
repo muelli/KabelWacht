@@ -9,6 +9,8 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 ### Added
 - New tunnels (blank or imported) are prefilled with a free auto-generated
   name (`wg-tunnel-1`, `wg-tunnel-2`, …).
+- All user-visible strings are now translatable resources; `CONTRIBUTING.md`
+  explains how to contribute a language.
 
 ### Changed
 - Importing a configuration (QR or file) that exactly matches a stored tunnel

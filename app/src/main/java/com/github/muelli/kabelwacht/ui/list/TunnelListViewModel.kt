@@ -6,9 +6,11 @@ package com.github.muelli.kabelwacht.ui.list
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.muelli.kabelwacht.R
 import com.github.muelli.kabelwacht.data.ConfigStore
 import com.github.muelli.kabelwacht.data.TunnelProfile
 import com.github.muelli.kabelwacht.data.TunnelRepository
+import com.github.muelli.kabelwacht.ui.UiMessage
 import com.github.muelli.kabelwacht.vpn.TunnelManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,9 +26,9 @@ class TunnelListViewModel(
     val activeTunnel: StateFlow<String?> = tunnelManager.activeTunnel
     val alwaysOnTunnel: kotlinx.coroutines.flow.Flow<String?> = tunnelManager.alwaysOnTunnel
 
-    private val _message = MutableStateFlow<String?>(null)
+    private val _message = MutableStateFlow<UiMessage?>(null)
     /** Transient user-facing message (shown in a snackbar), or null. */
-    val message: StateFlow<String?> = _message.asStateFlow()
+    val message: StateFlow<UiMessage?> = _message.asStateFlow()
 
     /** VPN consent intent to launch before activating a tunnel, or null if already granted. */
     fun consentIntent(): Intent? = tunnelManager.consentIntent()
@@ -44,7 +46,10 @@ class TunnelListViewModel(
     fun setActive(profile: TunnelProfile, up: Boolean) {
         viewModelScope.launch {
             runCatching { tunnelManager.setTunnelState(profile, up) }
-                .onFailure { _message.value = it.message ?: "Could not change tunnel state" }
+                .onFailure {
+                    _message.value = it.message?.let(::UiMessage)
+                        ?: UiMessage(R.string.error_tunnel_state)
+                }
         }
     }
 
@@ -58,8 +63,8 @@ class TunnelListViewModel(
         }
     }
 
-    fun showMessage(text: String) {
-        _message.value = text
+    fun showMessage(message: UiMessage) {
+        _message.value = message
     }
 
     fun clearMessage() {
