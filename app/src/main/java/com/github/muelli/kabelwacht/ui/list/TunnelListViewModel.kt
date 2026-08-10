@@ -6,6 +6,7 @@ package com.github.muelli.kabelwacht.ui.list
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.muelli.kabelwacht.data.ConfigStore
 import com.github.muelli.kabelwacht.data.TunnelProfile
 import com.github.muelli.kabelwacht.data.TunnelRepository
 import com.github.muelli.kabelwacht.vpn.TunnelManager
@@ -31,6 +32,13 @@ class TunnelListViewModel(
     fun consentIntent(): Intent? = tunnelManager.consentIntent()
 
     fun onResume() = repository.refresh()
+
+    /**
+     * Name of the stored profile [raw] is an exact re-import of, or null if the
+     * config is new (or does not parse — the editor will surface that instead).
+     */
+    fun duplicateOf(raw: String): String? =
+        runCatching { repository.findDuplicate(ConfigStore.parse(raw)) }.getOrNull()
 
     /** Bring [profile] up (assumes VPN consent already granted) or down. */
     fun setActive(profile: TunnelProfile, up: Boolean) {

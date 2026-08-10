@@ -4,6 +4,16 @@ All notable changes to KabelWacht are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Per-release notes shown
 in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
+## [Unreleased]
+
+### Added
+- New tunnels (blank or imported) are prefilled with a free auto-generated
+  name (`wg-tunnel-1`, `wg-tunnel-2`, …).
+
+### Changed
+- Importing a configuration (QR or file) that exactly matches a stored tunnel
+  now says so instead of offering a second import.
+
 ## [6] — versionCode 6
 
 ### Added

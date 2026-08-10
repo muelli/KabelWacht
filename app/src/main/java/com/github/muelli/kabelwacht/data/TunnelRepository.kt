@@ -31,6 +31,18 @@ class TunnelRepository(private val store: ConfigStore) {
 
     fun exists(name: String): Boolean = store.exists(name)
 
+    /**
+     * Name of a stored profile whose config is semantically identical to [config]
+     * (same canonical wg-quick serialization), or null if there is none.
+     */
+    fun findDuplicate(config: Config): String? {
+        val canonical = config.toWgQuickString()
+        return _profiles.value.firstOrNull { it.config.toWgQuickString() == canonical }?.name
+    }
+
+    /** First free auto-generated name, for prefilling the editor of a new profile. */
+    fun suggestName(): String = suggestName(::exists)
+
     /** Create or overwrite a profile with the given name and config. */
     fun save(name: String, config: Config) {
         store.save(name, config)
@@ -50,5 +62,15 @@ class TunnelRepository(private val store: ConfigStore) {
     fun delete(name: String) {
         store.delete(name)
         refresh()
+    }
+
+    companion object {
+        /**
+         * First "wg-tunnel-<n>" (n >= 1) for which [taken] is false. Tunnel names
+         * are capped at 15 characters (they double as the interface name), which
+         * this scheme respects up to n = 99999.
+         */
+        fun suggestName(taken: (String) -> Boolean): String =
+            generateSequence(1) { it + 1 }.map { "wg-tunnel-$it" }.first { !taken(it) }
     }
 }

@@ -96,15 +96,19 @@ class EditTunnelViewModel(
         if (text == null) {
             // Blank creation: one empty peer to fill in.
             peers.add(PeerFormState())
-            return
+        } else {
+            try {
+                fillFormFrom(ConfigStore.parse(text))
+            } catch (e: Exception) {
+                // Not parseable (yet): fall back to the raw editor so nothing is lost.
+                rawText = text
+                rawExpanded = true
+                configError = e.message ?: "Invalid WireGuard configuration"
+            }
         }
-        try {
-            fillFormFrom(ConfigStore.parse(text))
-        } catch (e: Exception) {
-            // Not parseable (yet): fall back to the raw editor so nothing is lost.
-            rawText = text
-            rawExpanded = true
-            configError = e.message ?: "Invalid WireGuard configuration"
+        // New profiles (blank or imported) start with a free auto-generated name.
+        if (originalName == null && name.isBlank()) {
+            name = repository.suggestName()
         }
     }
 

@@ -81,10 +81,16 @@ fun TunnelListScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Show the wg-quick text from an import in the edit screen for naming/review.
+    // Show the wg-quick text from an import in the edit screen for naming/review —
+    // unless it is an exact re-import of a stored profile, which just gets a notice.
     fun receiveImport(raw: String) {
-        container.pendingImport = raw
-        onImport()
+        val duplicate = viewModel.duplicateOf(raw)
+        if (duplicate != null) {
+            viewModel.showMessage(context.getString(R.string.import_duplicate, duplicate))
+        } else {
+            container.pendingImport = raw
+            onImport()
+        }
     }
 
     // --- QR scanning (zxing-android-embedded, no Google Play Services) ---
