@@ -97,26 +97,30 @@ be 1–15 chars of `A–Z a–z 0–9 _ = + . -`).
 
 ## Versioning and releasing
 
-The version is a **single incrementing integer** (like an Android `versionCode`),
-kept in [`version.properties`](version.properties). Gradle derives both `versionCode`
-and `versionName` from it, so there is one number to bump.
+The version is driven entirely by Git history to ensure strict monotonic versioning for F-Droid without manual bumps. The `versionCode` is the **total number of commits** (`git rev-list --count HEAD`).
 
-To cut release _N_:
+Every push to the `main` branch automatically builds and publishes an `-rc` (release candidate) version to the custom F-Droid repository.
 
-1. Set `versionCode=N` in `version.properties`.
+To cut a **stable release**:
+
+1. Find the current commit count to use as the version number (`N`):
+   ```bash
+   N=$(git rev-list --count HEAD)
+   echo $N
+   ```
 2. Add release notes at `fastlane/metadata/android/en-US/changelogs/N.txt`.
-3. Commit, then tag and push:
+3. Tag the commit with `vN` (e.g. `v78`) and push:
 
    ```bash
    git tag vN && git push origin vN
    ```
 
-Pushing the `vN` tag triggers [`release.yml`](.github/workflows/release.yml), which:
+Pushing the `vN` tag triggers [`release.yml`](.github/workflows/release.yml) and [`publish-fdroid.yml`](.github/workflows/publish-fdroid.yml), which:
 
-- verifies the tag matches `version.properties` (fails fast on a mismatch),
-- builds the release APK,
+- builds the stable release APK (the `versionName` drops the `-rc` suffix),
 - publishes a GitHub Release whose notes come from the fastlane changelog
-  `changelogs/N.txt` (falling back to auto-generated notes if it's missing).
+  `changelogs/N.txt` (falling back to auto-generated notes if it's missing),
+- publishes the stable APK to the custom F-Droid repository.
 
 Signing is optional via the `APP_SIGNING_SEED` secret (see [Signing](#signing)).
 Without it the release APK is published unsigned (F-Droid rebuilds and signs from
@@ -165,10 +169,13 @@ template lives at
 ### Self-hosted F-Droid repository (auto-published)
 
 You can also run your **own** F-Droid repository, hosted on GitHub Pages and updated
-automatically on every `vN` tag by
-[`.github/workflows/publish-fdroid.yml`](.github/workflows/publish-fdroid.yml). On a
-tag it builds and signs the APK, runs `fdroid update` to (re)generate the signed
-index, and pushes the result to a persistent `fdroid-repo` branch that Pages serves.
+automatically on **every push to `main` and every tag** by
+[`.github/workflows/publish-fdroid.yml`](.github/workflows/publish-fdroid.yml). 
+
+- Regular commits are published as `-rc` builds (release candidates). The F-Droid client will **not** auto-update users to these builds (they are hidden via `CurrentVersionCode`), so it's safe to push continuously.
+- Tagged releases are published as stable builds, which *do* trigger auto-updates for users.
+
+To prevent repository size bloat, the workflow statelessly retains only the latest 5 stable builds and 2 `-rc` builds, rewriting the `fdroid-repo` branch from scratch on every run. **Note**: You must disable branch protection (allow force pushes) on the `fdroid-repo` branch for this to work.
 
 ### Signing
 
