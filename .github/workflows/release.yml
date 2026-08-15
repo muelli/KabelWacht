@@ -23,11 +23,12 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive  # WireGuard sources are built from source
+          fetch-depth: 0
 
       - name: Read version and locate changelog
         id: version
         run: |
-          CODE="$(grep -E '^versionCode=' version.properties | cut -d= -f2 | tr -d '[:space:]')"
+          CODE="$(git rev-list --count HEAD)"
           echo "code=${CODE}" >> "$GITHUB_OUTPUT"
           CHANGELOG="fastlane/metadata/android/en-US/changelogs/${CODE}.txt"
           if [ -f "$CHANGELOG" ]; then
@@ -45,7 +46,7 @@ jobs:
           ACTUAL="${GITHUB_REF_NAME}"
           echo "expected tag ${EXPECTED}; pushed tag ${ACTUAL}"
           if [ "$ACTUAL" != "$EXPECTED" ]; then
-            echo "::error::Tag ${ACTUAL} does not match version.properties (${EXPECTED}). Bump version.properties, add fastlane/metadata/android/en-US/changelogs/${{ steps.version.outputs.code }}.txt, commit, then tag ${EXPECTED}."
+            echo "::error::Tag ${ACTUAL} does not match commit count (${EXPECTED}). Please tag exactly with the commit count (e.g. ${EXPECTED})."
             exit 1
           fi
 

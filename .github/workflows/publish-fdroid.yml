@@ -3,6 +3,7 @@ name: Publish F-Droid repo
 on:
   push:
     tags: ['v*']
+    branches: ['main', 'master']
   workflow_dispatch:
 
 # Push the generated repo to the fdroid-repo branch and (best-effort) enable Pages.
@@ -27,6 +28,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive  # WireGuard sources are built from source
+          fetch-depth: 0
 
       - name: Check required secrets
         id: gate
@@ -41,7 +43,14 @@ jobs:
       - name: Read version
         if: steps.gate.outputs.ready == 'true'
         id: version
-        run: echo "code=$(grep -E '^versionCode=' version.properties | cut -d= -f2 | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "code=$(git rev-list --count HEAD)" >> "$GITHUB_OUTPUT"
+          LATEST_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
+          if [ -n "$LATEST_TAG" ]; then
+            echo "current_code=$(git rev-list --count "$LATEST_TAG")" >> "$GITHUB_OUTPUT"
+          else
+            echo "current_code=" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up JDK 17
         if: steps.gate.outputs.ready == 'true'
@@ -76,9 +85,14 @@ jobs:
           export APP_PASS
           BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
           CODE="${{ steps.version.outputs.code }}"
+          if [ "${{ github.ref_type }}" == "tag" ]; then
+            APK_NAME="kabelwacht-$CODE.apk"
+          else
+            APK_NAME="kabelwacht-$CODE-rc.apk"
+          fi
           UNSIGNED="app/build/outputs/apk/release/app-release-unsigned.apk"
           ALIGNED="$RUNNER_TEMP/kabelwacht-$CODE-aligned.apk"
-          SIGNED="$RUNNER_TEMP/kabelwacht-$CODE.apk"
+          SIGNED="$RUNNER_TEMP/$APK_NAME"
           "$BUILD_TOOLS/zipalign" -f 4 "$UNSIGNED" "$ALIGNED"
           "$BUILD_TOOLS/apksigner" sign \
             --ks "$RUNNER_TEMP/app.p12" \
@@ -103,17 +117,21 @@ jobs:
         run: |
           set -euo pipefail
           CODE="${{ steps.version.outputs.code }}"
+          CURRENT_CODE="${{ steps.version.outputs.current_code }}"
           REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
-          # Restore the persistent repo state (or start an orphan branch on first run).
+          # Clone the existing fdroid-repo branch to grab recent APKs
           if git ls-remote --exit-code --heads "$REMOTE" fdroid-repo >/dev/null 2>&1; then
-            git clone --depth 1 --branch fdroid-repo --single-branch "$REMOTE" site
+            git clone --depth 1 --branch fdroid-repo --single-branch "$REMOTE" old_site
           else
-            git clone --depth 1 "$REMOTE" site
-            ( cd site && git checkout --orphan fdroid-repo && git rm -rf . >/dev/null 2>&1 || true )
+            mkdir old_site
           fi
-          # Remove any previous root-level repo layout (migrated to /fdroid/repo).
-          rm -rf site/repo site/metadata site/archive
+
+          # Start an orphan branch on every run to avoid repo bloat (Option B).
+          mkdir site && cd site
+          git init
+          git checkout --orphan fdroid-repo
+          cd ..
 
           # Serve the repo under /fdroid/repo so plain https links auto-open F-Droid.
           mkdir -p site/fdroid/repo site/fdroid/metadata
@@ -131,7 +149,27 @@ jobs:
           keypass: "${FDROID_PASS}"
           EOF
 
-          cp "$SIGNED_APK" "site/fdroid/repo/kabelwacht-$CODE.apk"
+          # Copy up to 5 most recent stable APKs and 2 recent RC APKs from the previous run
+          if [ -d old_site/fdroid/repo ]; then
+            for f in old_site/fdroid/repo/kabelwacht-*.apk; do
+              [ -e "$f" ] || continue
+              if [[ "$f" == *"-rc.apk" ]]; then
+                echo "$f" >> rc_apks.txt
+              else
+                echo "$f" >> stable_apks.txt
+              fi
+            done
+            if [ -f stable_apks.txt ]; then
+              sort -V stable_apks.txt | tail -n 5 | xargs -I {} cp "{}" site/fdroid/repo/
+            fi
+            if [ -f rc_apks.txt ]; then
+              if [ "${{ github.ref_type }}" == "tag" ]; then KEEP_RC=2; else KEEP_RC=1; fi
+              sort -V rc_apks.txt | tail -n $KEEP_RC | xargs -I {} cp "{}" site/fdroid/repo/
+            fi
+            rm -f stable_apks.txt rc_apks.txt
+          fi
+
+          cp "$SIGNED_APK" "site/fdroid/repo/$(basename "$SIGNED_APK")"
 
           # Feed the app's fastlane metadata (name, descriptions, icon) into the
           # repo so the F-Droid client shows a proper listing instead of stubs.
@@ -150,6 +188,13 @@ jobs:
           # into repo/icons/ directly does NOT work — update overwrites it with a
           # QR-code placeholder when the configured source file is missing.)
           cp "$FASTLANE/images/icon.png" site/fdroid/icon.png
+
+          # Write F-Droid metadata to enforce CurrentVersionCode (prevent auto-update to RC).
+          mkdir -p site/fdroid/metadata
+          cp "fdroid/com.github.muelli.kabelwacht.yml" "site/fdroid/metadata/"
+          if [ -n "$CURRENT_CODE" ]; then
+            sed -i "s/^CurrentVersionCode:.*$/CurrentVersionCode: $CURRENT_CODE/" "site/fdroid/metadata/com.github.muelli.kabelwacht.yml"
+          fi
 
           ( cd site/fdroid && fdroid update --create-metadata --verbose )
 
@@ -196,10 +241,10 @@ jobs:
           import json
           idx = json.load(open("site/fdroid/repo/index-v2.json"))
           for appid, pkg in idx.get("packages", {}).items():
-              best = max(pkg["versions"].values(), key=lambda v: v["manifest"]["versionCode"])
               name = (pkg["metadata"].get("name") or {}).get("en-US", appid)
-              print(appid, "site/fdroid/repo" + best["file"]["name"],
-                    best["manifest"]["versionCode"], name.replace(" ", "_"))
+              for version_id, v in pkg["versions"].items():
+                  print(appid, "site/fdroid/repo" + v["file"]["name"],
+                        v["manifest"]["versionCode"], name.replace(" ", "_"))
           PY
           while read -r APPID APK VC APPNAME; do
             fdroid scanner --exit-code "$APK" 2>&1 | tee scan.out
@@ -218,10 +263,14 @@ jobs:
               echo
               echo "All code is built from public source; licensing is documented in the"
               echo "project repository (LICENSE, NOTICE): https://github.com/${GITHUB_REPOSITORY}"
-            } > "site/freedom-report-$APPID.txt"
+            } > "site/freedom-report-$APPID-$VC.txt"
           done < apps.list
-          # Keep the historical URL working (single-app era).
-          cp "site/freedom-report-com.github.muelli.kabelwacht.txt" site/freedom-report.txt 2>/dev/null || true
+          # Keep the historical URL working (single-app era). We grab the highest versionCode to point the generic text file to.
+          LATEST_VC=$(awk '{print $3}' apps.list | sort -nr | head -n1)
+          if [ -n "$LATEST_VC" ]; then
+            cp "site/freedom-report-com.github.muelli.kabelwacht-$LATEST_VC.txt" site/freedom-report.txt 2>/dev/null || true
+            cp "site/freedom-report-com.github.muelli.kabelwacht-$LATEST_VC.txt" site/freedom-report-com.github.muelli.kabelwacht.txt 2>/dev/null || true
+          fi
 
           # Compute the repo fingerprint for the landing page / add-repo link.
           FP="$(keytool -list -v -keystore site/fdroid/fdroid.p12 -storepass "$FDROID_PASS" -alias fdroid \
@@ -252,7 +301,7 @@ jobs:
           git -c user.name='github-actions[bot]' \
               -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
               commit -m "Publish KabelWacht versionCode $CODE" || { echo "nothing to commit"; exit 0; }
-          git push "$REMOTE" HEAD:fdroid-repo
+          git push --force "$REMOTE" HEAD:fdroid-repo
 
       # Binary transparency: log the published APK and the signed repo index
       # (entry.jar) in the public Sigstore transparency log. Attesting the index
@@ -264,7 +313,7 @@ jobs:
         uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4
         with:
           subject-path: |
-            site/fdroid/repo/kabelwacht-${{ steps.version.outputs.code }}.apk
+            site/fdroid/repo/kabelwacht-${{ steps.version.outputs.code }}*.apk
             site/fdroid/repo/entry.jar
 
       - name: Enable GitHub Pages (best-effort, first run only)
