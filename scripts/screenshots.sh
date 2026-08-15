@@ -8,7 +8,8 @@
 #   2. boots the "shots" AVD headless (creates it first if missing),
 #   3. installs the app and stages a demo tunnel in its private storage,
 #   4. puts the status bar into demo mode (10:00, full battery, clean),
-#   5. captures: tunnel list, tunnel editor, add menu,
+#   5. captures: tunnel list, structured editor, raw editor, add menu, and
+#      the tunnel list in dark theme,
 #   6. writes them to fastlane/metadata/android/en-US/images/phoneScreenshots/.
 #
 # Usage:
@@ -158,25 +159,61 @@ tap_element() { # tap_element <attr> <value>
 
 shot() { "$ADB" exec-out screencap -p > "$1"; say "captured $1"; }
 
+# Swipe up until an element scrolls into view, then echo its center ("x y").
+scroll_to_element() { # scroll_to_element <attr> <value>
+  local coords i
+  for i in $(seq 1 8); do
+    coords="$(element_coords "$1" "$2")"
+    [ -n "$coords" ] && { printf '%s' "$coords"; return 0; }
+    "$ADB" shell input swipe 540 1700 540 700 300 >/dev/null 2>&1
+    sleep 1
+  done
+  echo "could not scroll to $1=$2" >&2
+  return 1
+}
+
+launch() { # launch (cold) into the tunnel list
+  "$ADB" shell am force-stop "$APP_ID"
+  "$ADB" shell am start -n "$APP_ID/.MainActivity" >/dev/null
+  wait_for_element text "vpn.example" >/dev/null
+  sleep 1
+}
+
 mkdir -p "$OUT_DIR"
-say "Launching the app"
-"$ADB" shell am force-stop "$APP_ID"
-"$ADB" shell am start -n "$APP_ID/.MainActivity" >/dev/null
-wait_for_element text "vpn.example" >/dev/null   # list drawn with the demo tunnel
-sleep 1
-shot "$OUT_DIR/1.png"                            # tunnel list
+say "Capturing screenshots"
 
+# 1. Tunnel list (light).
+launch
+shot "$OUT_DIR/1.png"
+
+# 2. Structured editor.
 tap_element text "vpn.example"
-wait_for_element text "Interface" >/dev/null     # editor drawn
+wait_for_element text "Interface" >/dev/null
 sleep 1
-shot "$OUT_DIR/2.png"                            # structured editor
+shot "$OUT_DIR/2.png"
 
-"$ADB" shell input keyevent BACK
-wait_for_element content-desc "Add tunnel" >/dev/null
-tap_element content-desc "Add tunnel"
-wait_for_element text "Scan QR code" >/dev/null  # menu open
+# 3. Raw-configuration editor (expander opened and revealed).
+# shellcheck disable=SC2046
+"$ADB" shell input tap $(scroll_to_element text "Raw configuration")
 sleep 1
-shot "$OUT_DIR/3.png"                            # add menu
+"$ADB" shell input swipe 540 1700 540 900 300   # bring the expanded field into view
+sleep 1
+shot "$OUT_DIR/3.png"
+
+# 4. Add menu.
+"$ADB" shell am force-stop "$APP_ID"; launch
+tap_element content-desc "Add tunnel"
+wait_for_element text "Scan QR code" >/dev/null
+sleep 1
+shot "$OUT_DIR/4.png"
+
+# 5. Tunnel list in dark theme.
+say "Switching to dark theme"
+"$ADB" shell cmd uimode night yes >/dev/null 2>&1 || true
+sleep 2
+launch
+shot "$OUT_DIR/5.png"
+"$ADB" shell cmd uimode night no >/dev/null 2>&1 || true
 
 demo -e command exit
 say "Done: $(ls "$OUT_DIR" | tr '\n' ' ')"
