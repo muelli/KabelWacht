@@ -9,24 +9,21 @@ plugins {
 // Single source of truth for the version: the total number of commits.
 // This ensures strict monotonic versioning for F-Droid without manual bumps.
 val appVersionCode = try {
-    val p = ProcessBuilder("git", "rev-list", "--count", "HEAD")
-        .directory(rootProject.rootDir)
-        .redirectError(ProcessBuilder.Redirect.PIPE)
-        .start()
-    p.waitFor()
-    p.inputStream.bufferedReader().readText().trim().toInt()
+    providers.exec {
+        commandLine("git", "rev-list", "--count", "HEAD")
+        workingDir = rootProject.rootDir
+    }.standardOutput.asText.get().trim().toInt()
 } catch (e: Exception) {
     // Fallback if git is unavailable (e.g. source tarball without .git)
     1
 }
 
 val isReleaseTag = try {
-    val p = ProcessBuilder("git", "describe", "--tags", "--exact-match", "HEAD")
-        .directory(rootProject.rootDir)
-        .redirectError(ProcessBuilder.Redirect.PIPE)
-        .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-        .start()
-    p.waitFor() == 0
+    providers.exec {
+        commandLine("git", "describe", "--tags", "--exact-match", "HEAD")
+        workingDir = rootProject.rootDir
+        isIgnoreExitValue = true
+    }.result.get().exitValue == 0
 } catch (e: Exception) {
     false
 }
