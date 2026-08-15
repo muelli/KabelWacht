@@ -222,7 +222,8 @@ self-contained: no external scripts, styles, fonts, or trackers.
                     }).join("") + "</div>" : "")
             + (latest ? '<p class="meta">Latest: version ' + esc(latest.manifest.versionName)
                 + " (" + fmtSize(latest.file.size) + ", " + fmtDate(latest.added) + ") · "
-                + '<a href="' + esc(apk) + '">download APK</a></p>' : "")
+                + '<a href="' + esc(apk) + '">download APK</a> · '
+                + '<a href="freedom-report-' + esc(a.id) + '-' + esc(latest.manifest.versionCode) + '.txt">freedom report</a></p>' : "")
             + (a.description
                 ? "<details><summary>Full description</summary><p>"
                   + esc(a.description) + "</p></details>" : "")
@@ -231,10 +232,10 @@ self-contained: no external scripts, styles, fonts, or trackers.
                   + '<ul class="versions">' + older.map(function (v) {
                       return "<li>version " + esc(v.manifest.versionName)
                         + " (" + fmtSize(v.file.size) + ") — "
-                        + '<a href="' + esc(REPO + v.file.name) + '">APK</a></li>';
+                        + '<a href="' + esc(REPO + v.file.name) + '">APK</a> · '
+                        + '<a href="freedom-report-' + esc(a.id) + '-' + esc(v.manifest.versionCode) + '.txt">freedom report</a></li>';
                     }).join("") + "</ul></details>" : "")
-            + '<p class="meta">Package: <code>' + esc(a.id) + "</code> · "
-            + '<a href="freedom-report-' + esc(a.id) + '.txt">freedom report</a></p>'
+            + '<p class="meta">Package: <code>' + esc(a.id) + "</code></p>"
             + "</div></article>";
         }).join("") || "<p>No apps match your search.</p>";
         countEl.textContent = shown.length === apps.length
