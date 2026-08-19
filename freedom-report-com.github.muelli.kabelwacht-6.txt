@@ -1,0 +1,34 @@
+KabelWacht (com.github.muelli.kabelwacht) — software-freedom report (versionCode 6)
+Generated 2026-08-19 10:27:41Z by GitHub Actions.
+
+== F-Droid scanner (fdroidserver 2.4.5) ==
+Command: fdroid scanner --exit-code kabelwacht-6.apk
+Result: PASS — no known non-free classes, trackers, or extra signing blocks.
+
+    2026-08-19 10:27:38,153 INFO: Scanning APK with dexdump for known non-free classes.
+    2026-08-19 10:27:40,966 INFO: Scanning APK for extra signing blocks.
+
+== Bundled native libraries ==
+    lib/arm64-v8a/libandroidx.graphics.path.so  (10096 bytes)
+    lib/arm64-v8a/libdatastore_shared_counter.so  (7112 bytes)
+    lib/arm64-v8a/libwg-go.so  (3365264 bytes)
+    lib/arm64-v8a/libwg-quick.so  (30104 bytes)
+    lib/arm64-v8a/libwg.so  (81888 bytes)
+    lib/armeabi-v7a/libandroidx.graphics.path.so  (7252 bytes)
+    lib/armeabi-v7a/libdatastore_shared_counter.so  (4416 bytes)
+    lib/armeabi-v7a/libwg-go.so  (3174788 bytes)
+    lib/armeabi-v7a/libwg-quick.so  (22848 bytes)
+    lib/armeabi-v7a/libwg.so  (47172 bytes)
+    lib/x86/libandroidx.graphics.path.so  (9284 bytes)
+    lib/x86/libdatastore_shared_counter.so  (5148 bytes)
+    lib/x86/libwg-go.so  (3197504 bytes)
+    lib/x86/libwg-quick.so  (31836 bytes)
+    lib/x86/libwg.so  (70912 bytes)
+    lib/x86_64/libandroidx.graphics.path.so  (10760 bytes)
+    lib/x86_64/libdatastore_shared_counter.so  (6224 bytes)
+    lib/x86_64/libwg-go.so  (3606928 bytes)
+    lib/x86_64/libwg-quick.so  (31544 bytes)
+    lib/x86_64/libwg.so  (93248 bytes)
+
+All code is built from public source; licensing is documented in the
+project repository (LICENSE, NOTICE): https://github.com/muelli/KabelWacht

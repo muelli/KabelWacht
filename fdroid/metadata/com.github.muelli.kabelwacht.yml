@@ -1,0 +1,56 @@
+# Ready-to-submit metadata for the official F-Droid catalogue.
+#
+# Copy this file to metadata/com.github.muelli.kabelwacht.yml in a fork of
+# https://gitlab.com/fdroid/fdroiddata and open a merge request (see
+# docs/FDROIDDATA.md for the exact steps). It is NOT read from this repo by
+# F-Droid. Strip these leading comments when submitting.
+#
+# Reproducible-publishing setup: Binaries + AllowedAPKSigningKeys make
+# F-Droid build from source, verify the result matches the developer-signed
+# APK from the GitHub release, and publish the developer-signed APK.
+
+Categories:
+  - Connectivity
+  - Security
+  - VPN & Proxy
+License: AGPL-3.0-or-later
+AuthorName: Tobias Mueller
+SourceCode: https://github.com/muelli/KabelWacht
+IssueTracker: https://github.com/muelli/KabelWacht/issues
+Changelog: https://github.com/muelli/KabelWacht/releases
+
+AutoName: KabelWacht
+
+RepoType: git
+Repo: https://github.com/muelli/KabelWacht.git
+Binaries: https://github.com/muelli/KabelWacht/releases/download/v%c/kabelwacht-%c.apk
+AllowedAPKSigningKeys: 8f02760a5c600a686c7ff452521c7a4be9f8ced922cdc7f9fc639b068625c289
+
+Builds:
+  - versionName: '6'
+    versionCode: 6
+    commit: v6
+    subdir: app
+    submodules: true
+    gradle:
+      - yes
+    ndk: 27.2.12479018
+
+MaintainerNotes: |-
+  WireGuard is built entirely from source (git submodules of wireguard-android,
+  wireguard-tools and termux-elf-cleaner; wireguard-go via Go modules). During
+  the native build, upstream's tunnel/tools/libwg-go/Makefile downloads a
+  pinned Go toolchain from go.dev and verifies its SHA-256 before use.
+
+  Builds are byte-for-byte reproducible (enforced by the upstream repo's CI on
+  every tag); Binaries + AllowedAPKSigningKeys enable reproducible publishing
+  of the developer-signed APK. App descriptions, icon, changelogs and
+  screenshots come from fastlane metadata in the source repository.
+
+  versionName and versionCode are intentionally the same single integer;
+  release tags are v<versionCode>.
+
+AutoUpdateMode: Version v%c
+UpdateCheckMode: Tags
+CurrentVersion: '6'
+CurrentVersionCode: 77

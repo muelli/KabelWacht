@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?><fdroid><repo icon="icon.png" name="KabelWacht" pubkey="308201453081eca00302010202140e11dcbbe82df70bf50b7e6fa76068db0b0d2773300a06082a8648ce3d04030230223120301e06035504030c174b6162656c576163687420462d44726f6964205265706f3020170d3236303130313030303030305a180f32313236303130313030303030305a30223120301e06035504030c174b6162656c576163687420462d44726f6964205265706f3059301306072a8648ce3d020106082a8648ce3d03010703420004fd16984280c7fb6dfb6480b29eaaee398c4fd414add027a27ae96d7cc1a1f40f3d5e25bfbae616d78ba040e5ed02ce952d6993181bab341711d8bd74ddeb8caf300a06082a8648ce3d04030203480030450220422298c5c092ce8c1a28665603388154f349752a004a8fddc5b408938a3b811d022100e18541f850de8f40161ce17794689e3f2a8915c9b7634e0885f81ad22d463085" timestamp="1787135245" url="https://muelli.github.io/KabelWacht/fdroid/repo" version="20002"><description>Personal F-Droid repository that publishes signed KabelWacht releases, built automatically from tagged commits in CI.</description></repo><application id="com.github.muelli.kabelwacht"><id>com.github.muelli.kabelwacht</id><added>2026-08-19</added><lastupdated>2026-08-19</lastupdated><name>KabelWacht</name><summary>A simple, free WireGuard VPN client: scan, import, and manage tunnels.</summary><desc>KabelWacht is a minimal, fully free-software WireGuard® client for Android.
+
+It does one thing well: manage WireGuard tunnels and connect.
+
+Features:
+
+* Create, list, edit and delete WireGuard profiles.
+* Import a configuration by scanning a QR code.
+* Import a configuration from a .conf file.
+* One-tap connect/disconnect with a per-tunnel switch.
+* Userspace WireGuard backend — no root required.
+
+Privacy and freedom:
+
+* 100% free and open-source software (AGPL-3.0-or-later).
+* No trackers, no analytics, no advertising.
+* No Google Play Services or other proprietary dependencies.
+* The only network connection made is your own WireGuard tunnel.
+
+Built on the official WireGuard tunnel library and the ZXing QR decoder.
+
+WireGuard is a registered trademark of Jason A. Donenfeld. This project is not
+officially affiliated with or endorsed by the WireGuard project.
+</desc><license>AGPL-3.0-or-later</license><categories>Connectivity,Security,VPN &amp; Proxy</categories><category>Connectivity</category><web></web><source>https://github.com/muelli/KabelWacht</source><tracker>https://github.com/muelli/KabelWacht/issues</tracker><changelog>https://github.com/muelli/KabelWacht/releases</changelog><author>Tobias Mueller</author><marketversion>6</marketversion><marketvercode>77</marketvercode><package><version>80-rc</version><versioncode>80</versioncode><apkname>kabelwacht-80-rc.apk</apkname><hash type="sha256">0457f7037c69529720a7d9ff62dddce9ab0eb9f3adfe7cbc20c2a54ca01df2bc</hash><size>16836784</size><sdkver>29</sdkver><targetSdkVersion>35</targetSdkVersion><added>2026-08-19</added><sig>74a947de067164ce2b712ba8b76f2d40</sig><permissions>CAMERA,INTERNET,USE_BIOMETRIC,com.github.muelli.kabelwacht.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION</permissions><nativecode>arm64-v8a,armeabi-v7a,x86,x86_64</nativecode></package><package><version>79-rc</version><versioncode>79</versioncode><apkname>kabelwacht-79-rc.apk</apkname><hash type="sha256">b4a4c6bc560f9dfdd169399e9fce2f4757c41608caf3abcd97468c477ee2e599</hash><size>16836784</size><sdkver>29</sdkver><targetSdkVersion>35</targetSdkVersion><added>2026-08-19</added><sig>74a947de067164ce2b712ba8b76f2d40</sig><permissions>CAMERA,INTERNET,USE_BIOMETRIC,com.github.muelli.kabelwacht.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION</permissions><nativecode>arm64-v8a,armeabi-v7a,x86,x86_64</nativecode></package><package><version>77</version><versioncode>77</versioncode><apkname>kabelwacht-77.apk</apkname><hash type="sha256">b3d344a60d93959a3b61f1e93a0f5c3957e77c9ec6c5e2257af21bce2a8db687</hash><size>16836784</size><sdkver>29</sdkver><targetSdkVersion>35</targetSdkVersion><added>2026-08-19</added><sig>74a947de067164ce2b712ba8b76f2d40</sig><permissions>CAMERA,INTERNET,USE_BIOMETRIC,com.github.muelli.kabelwacht.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION</permissions><nativecode>arm64-v8a,armeabi-v7a,x86,x86_64</nativecode></package><package><version>6</version><versioncode>6</versioncode><apkname>kabelwacht-6.apk</apkname><hash type="sha256">726309fe9949d34c35d47f3b628b95d3d2b3233ea4250e5f31e53cb33711b137</hash><size>16832688</size><sdkver>29</sdkver><targetSdkVersion>35</targetSdkVersion><added>2026-08-19</added><sig>74a947de067164ce2b712ba8b76f2d40</sig><permissions>CAMERA,INTERNET,USE_BIOMETRIC,com.github.muelli.kabelwacht.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION</permissions><nativecode>arm64-v8a,armeabi-v7a,x86,x86_64</nativecode></package></application></fdroid>
