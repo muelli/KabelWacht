@@ -90,6 +90,7 @@ jobs:
           SIGNED="$DIR/kabelwacht-${{ steps.version.outputs.code }}.apk"
           "$BUILD_TOOLS/zipalign" -f 4 "$UNSIGNED" "$ALIGNED"
           "$BUILD_TOOLS/apksigner" sign \
+            --alignment-preserved \
             --ks "$RUNNER_TEMP/app.p12" \
             --ks-pass env:APP_PASS \
             --ks-key-alias app \
