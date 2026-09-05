@@ -10,8 +10,10 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 - Search in the tunnel list (shown from four tunnels up): matches the tunnel
   name first, then endpoints, DNS, addresses and allowed IPs — never key
   material.
-- Hardware-keyboard shortcuts: Ctrl+F searches, Ctrl+N creates a tunnel,
-  Delete on a focused row asks to delete it, and Ctrl+S saves in the editor.
+- Hardware-keyboard shortcuts: Ctrl+F searches (Esc closes it), Ctrl+N creates
+  a tunnel, Delete on a focused row asks to delete it, and Ctrl+S saves in the
+  editor. The whole app is keyboard-navigable: every control is reachable and
+  operable with Tab/arrow keys and Enter/Space.
 - **Run conditions**: tunnels can connect and disconnect automatically based
   on the current network — only on Wi-Fi, all Wi-Fis except chosen networks,
   only specific Wi-Fis, never (or only) on mobile data or roaming, Ethernet

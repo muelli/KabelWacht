@@ -62,6 +62,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
@@ -251,6 +252,10 @@ fun TunnelListScreen(
                         onCreate()
                         true
                     }
+                    event.key == Key.Escape && viewModel.searchActive -> {
+                        viewModel.closeSearch()
+                        true
+                    }
                     else -> false
                 }
             },
@@ -425,24 +430,28 @@ private fun EasterEggTitle() {
     var lastTap by remember { mutableStateOf(0L) }
     Text(
         stringResource(R.string.app_name),
-        modifier = Modifier.clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null,
-        ) {
-            val now = SystemClock.uptimeMillis()
-            taps = if (now - lastTap <= TAP_WINDOW_MS) taps + 1 else 1
-            lastTap = now
-            if (taps >= EASTER_EGG_TAPS) {
-                taps = 0
-                val version = context.packageManager
-                    .getPackageInfo(context.packageName, 0).versionName
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.version_toast, version),
-                    Toast.LENGTH_SHORT,
-                ).show()
-            }
-        },
+        modifier = Modifier
+            // Not part of keyboard traversal: with the ripple suppressed a focus
+            // stop here would be invisible, and the egg stays a touch gesture.
+            .focusProperties { canFocus = false }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) {
+                val now = SystemClock.uptimeMillis()
+                taps = if (now - lastTap <= TAP_WINDOW_MS) taps + 1 else 1
+                lastTap = now
+                if (taps >= EASTER_EGG_TAPS) {
+                    taps = 0
+                    val version = context.packageManager
+                        .getPackageInfo(context.packageName, 0).versionName
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.version_toast, version),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            },
     )
 }
 
