@@ -86,10 +86,12 @@ fun RunConditionsScreen(
         )
     }
 
+    // Android 12+ requires fine and coarse to be requested together (the user may
+    // pick approximate-only, which cannot read SSIDs — we keep checking for fine).
     val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { granted ->
-        hasLocationPermission = granted
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { grants ->
+        hasLocationPermission = grants[Manifest.permission.ACCESS_FINE_LOCATION] == true
     }
 
     val networkSnapshot by viewModel.networkSnapshot.collectAsStateWithLifecycle()
@@ -214,7 +216,12 @@ fun RunConditionsScreen(
                                 ) {
                                     if (!hasLocationPermission) {
                                         LocationPermissionNotice(onRequestPermission = {
-                                            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                                            permissionLauncher.launch(
+                                                arrayOf(
+                                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                                                ),
+                                            )
                                         })
                                     }
 
