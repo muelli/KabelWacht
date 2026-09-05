@@ -14,6 +14,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,6 +64,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -219,11 +227,33 @@ fun TunnelListScreen(
     // Leaving the search collapses it (before falling through to the system back).
     BackHandler(enabled = viewModel.searchActive) { viewModel.closeSearch() }
     val searchFocus = remember { FocusRequester() }
+    // The screen itself holds focus so hardware-keyboard shortcuts work without
+    // a prior tap; opening the search hands focus to its text field and closing
+    // it hands focus back.
+    val screenFocus = remember { FocusRequester() }
     LaunchedEffect(viewModel.searchActive) {
-        if (viewModel.searchActive) searchFocus.requestFocus()
+        val target = if (viewModel.searchActive) searchFocus else screenFocus
+        runCatching { target.requestFocus() }
     }
 
     Scaffold(
+        modifier = Modifier
+            .focusRequester(screenFocus)
+            .focusable()
+            .onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                when {
+                    event.isCtrlPressed && event.key == Key.F -> {
+                        viewModel.openSearch()
+                        true
+                    }
+                    event.isCtrlPressed && event.key == Key.N -> {
+                        onCreate()
+                        true
+                    }
+                    else -> false
+                }
+            },
         topBar = {
             TopAppBar(
                 title = {
@@ -458,7 +488,18 @@ private fun TunnelRow(
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            // Hardware keyboard: Delete on a focused row asks to delete it
+            // (the same confirmation dialog as the menu action).
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown && event.key == Key.Delete) {
+                    onDeleteClick()
+                    true
+                } else {
+                    false
+                }
+            },
         headlineContent = { Text(profile.name) },
         supportingContent = {
             val summary = profileEndpoint(profile) ?: stringResource(R.string.no_endpoint)
