@@ -14,7 +14,10 @@ import kotlinx.coroutines.flow.asStateFlow
  * Wraps [ConfigStore] and exposes the current profiles as an observable [StateFlow]
  * that the UI collects. Mutations write through to disk and then refresh the flow.
  */
-class TunnelRepository(private val store: ConfigStore) {
+class TunnelRepository(
+    private val store: ConfigStore,
+    private val conditionsStore: ConditionsStore? = null,
+) {
 
     private val _profiles = MutableStateFlow<List<TunnelProfile>>(emptyList())
     val profiles: StateFlow<List<TunnelProfile>> = _profiles.asStateFlow()
@@ -54,13 +57,17 @@ class TunnelRepository(private val store: ConfigStore) {
      * ends up under the new file), then writes the possibly-changed config.
      */
     fun update(oldName: String, newName: String, config: Config) {
-        if (oldName != newName) store.rename(oldName, newName)
+        if (oldName != newName) {
+            store.rename(oldName, newName)
+            conditionsStore?.rename(oldName, newName)
+        }
         store.save(newName, config)
         refresh()
     }
 
     fun delete(name: String) {
         store.delete(name)
+        conditionsStore?.delete(name)
         refresh()
     }
 

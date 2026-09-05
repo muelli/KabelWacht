@@ -74,4 +74,46 @@
     <string name="export_done">Tunnel "%1$s" exported.</string>
     <string name="export_failed">Could not write the export file.</string>
     <string name="export_auth_failed">Authentication was cancelled — nothing was exported.</string>
+
+    <!-- Run Conditions & Automation -->
+    <string name="run_conditions">Run conditions</string>
+    <string name="run_conditions_title">Run conditions: %1$s</string>
+    <string name="auto_label">Auto</string>
+    <string name="enable_run_conditions">Enable run conditions</string>
+    <string name="run_conditions_desc">Automatically connects or disconnects this tunnel based on your current network environment.</string>
+    <string name="section_live_status">Current status</string>
+    <string name="status_eval_running">Conditions met · Tunnel will connect</string>
+    <string name="status_eval_paused">Conditions not met · Tunnel will disconnect</string>
+    <string name="status_eval_disabled">Conditions disabled</string>
+    <string name="status_network_disconnected">No network connection</string>
+    <string name="status_network_wifi">Wi-Fi: %1$s</string>
+    <string name="status_network_wifi_unnamed">Wi-Fi (name hidden)</string>
+    <string name="status_network_mobile">Mobile data%1$s</string>
+    <string name="status_roaming_tag"> (roaming)</string>
+    <string name="status_network_ethernet">Ethernet</string>
+    <string name="status_metered_tag"> · Metered</string>
+    <string name="section_wifi_rules">Wi-Fi rules</string>
+    <string name="wifi_mode_any">All Wi-Fi networks</string>
+    <string name="wifi_mode_exclude">All except excluded networks (e.g. home)</string>
+    <string name="wifi_mode_include">Only specific Wi-Fi networks</string>
+    <string name="add_current_wifi">Add current: %1$s</string>
+    <string name="ssid_input_label">Wi-Fi network name (SSID)</string>
+    <string name="add_ssid">Add</string>
+    <string name="no_ssids_configured">No networks added yet</string>
+    <string name="location_permission_needed_title">Location permission for Wi-Fi names</string>
+    <string name="location_permission_needed_desc">Android requires Location permission to read Wi-Fi network names (SSID). KabelWacht never uses or tracks your GPS location.</string>
+    <string name="grant_permission">Grant permission</string>
+    <string name="section_mobile_rules">Mobile data rules</string>
+    <string name="mobile_mode_always">Connect on all mobile networks</string>
+    <string name="mobile_mode_never">Never connect on mobile data</string>
+    <string name="mobile_mode_only_roaming">Only connect when roaming</string>
+    <string name="mobile_mode_never_roaming">Never connect when roaming</string>
+    <string name="section_advanced_conditions">Advanced rules</string>
+    <string name="ethernet_enabled">Allow on Ethernet</string>
+    <string name="unmetered_only">Unmetered networks only</string>
+    <string name="unmetered_only_desc">Pause tunnel on metered connections (e.g. mobile hotspots) to avoid data usage.</string>
+    <string name="automation_service_notification_title">KabelWacht automation</string>
+    <string name="automation_service_notification_text">Monitoring network conditions for automated tunnels</string>
+    <string name="automation_notification_channel">Tunnel Automation</string>
+    <string name="automation_notification_channel_desc">Keeps network rule monitoring active in the background</string>
 </resources>

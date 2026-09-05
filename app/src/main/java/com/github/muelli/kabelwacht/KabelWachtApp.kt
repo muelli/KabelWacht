@@ -5,10 +5,14 @@ package com.github.muelli.kabelwacht
 
 import android.app.Application
 import android.content.Context
+import com.github.muelli.kabelwacht.data.ConditionsStore
 import com.github.muelli.kabelwacht.data.ConfigStore
 import com.github.muelli.kabelwacht.data.SettingsStore
 import com.github.muelli.kabelwacht.data.TunnelRepository
 import com.github.muelli.kabelwacht.vpn.TunnelManager
+import com.github.muelli.kabelwacht.vpn.automation.AutomationEngine
+import com.github.muelli.kabelwacht.vpn.automation.ConditionMonitorService
+import com.github.muelli.kabelwacht.vpn.automation.NetworkStateMonitor
 import com.wireguard.android.backend.GoBackend
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,8 +38,16 @@ class KabelWachtApp : Application() {
 /** Long-lived singletons shared across the app. */
 class AppContainer(context: Context) {
     val settings: SettingsStore = SettingsStore(context)
-    val repository: TunnelRepository = TunnelRepository(ConfigStore(context))
+    val conditionsStore: ConditionsStore = ConditionsStore(context)
+    val repository: TunnelRepository = TunnelRepository(ConfigStore(context), conditionsStore)
     val tunnelManager: TunnelManager = TunnelManager(context, settings)
+    val networkMonitor: NetworkStateMonitor = NetworkStateMonitor(context)
+    val automationEngine: AutomationEngine = AutomationEngine(
+        conditionsStore = conditionsStore,
+        repository = repository,
+        tunnelManager = tunnelManager,
+        networkMonitor = networkMonitor,
+    )
 
     /**
      * Hands off raw wg-quick text from a QR scan or file import to the edit screen.
@@ -48,6 +60,13 @@ class AppContainer(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     init {
+        // Sync foreground monitor service lifecycle with active automations
+        scope.launch {
+            automationEngine.hasActiveAutomations.collect { active ->
+                ConditionMonitorService.sync(context, active)
+            }
+        }
+
         // When Android starts the VPN via the system "Always-on VPN" feature, bring
         // up the remembered tunnel (falling back to the only/first one).
         GoBackend.setAlwaysOnCallback {

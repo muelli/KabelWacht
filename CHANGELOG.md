@@ -7,6 +7,13 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 ## [Unreleased]
 
 ### Added
+- **Run conditions**: tunnels can connect and disconnect automatically based
+  on the current network — only on Wi-Fi, all Wi-Fis except chosen networks,
+  only specific Wi-Fis, never (or only) on mobile data or roaming, Ethernet
+  on/off, unmetered networks only. Reading Wi-Fi names requires Android's
+  location permission, which is requested only if SSID rules are used; GPS is
+  never touched. A lightweight foreground service watches for network changes
+  only while at least one tunnel has conditions enabled.
 - New tunnels (blank or imported) are prefilled with a free auto-generated
   name (`wg-tunnel-1`, `wg-tunnel-2`, …).
 - All user-visible strings are now translatable resources; `CONTRIBUTING.md`

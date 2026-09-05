@@ -73,6 +73,7 @@ fun TunnelListScreen(
     onCreate: () -> Unit,
     onEdit: (String) -> Unit,
     onImport: () -> Unit,
+    onConditions: (String) -> Unit = {},
     viewModel: TunnelListViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val context = LocalContext.current
@@ -81,6 +82,7 @@ fun TunnelListScreen(
     val profiles by viewModel.profiles.collectAsStateWithLifecycle()
     val activeTunnel by viewModel.activeTunnel.collectAsStateWithLifecycle()
     val alwaysOnTunnel by viewModel.alwaysOnTunnel.collectAsStateWithLifecycle(initialValue = null)
+    val conditions by viewModel.conditions.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -251,9 +253,11 @@ fun TunnelListScreen(
                         profile = profile,
                         isActive = activeTunnel == profile.name,
                         isAlwaysOn = alwaysOnTunnel == profile.name,
+                        hasConditions = conditions[profile.name]?.enabled == true,
                         onToggle = { up -> toggle(profile, up) },
                         onClick = { onEdit(profile.name) },
                         onEditClick = { onEdit(profile.name) },
+                        onConditionsClick = { onConditions(profile.name) },
                         onExportClick = { toExport = profile },
                         onDeleteClick = { toDelete = profile },
                     )
@@ -359,9 +363,11 @@ private fun TunnelRow(
     profile: TunnelProfile,
     isActive: Boolean,
     isAlwaysOn: Boolean,
+    hasConditions: Boolean,
     onToggle: (Boolean) -> Unit,
     onClick: () -> Unit,
     onEditClick: () -> Unit,
+    onConditionsClick: () -> Unit,
     onExportClick: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
@@ -371,12 +377,13 @@ private fun TunnelRow(
         headlineContent = { Text(profile.name) },
         supportingContent = {
             val summary = profileEndpoint(profile) ?: stringResource(R.string.no_endpoint)
+            val parts = buildList {
+                add(summary)
+                if (isAlwaysOn) add(stringResource(R.string.always_on_label))
+                if (hasConditions) add(stringResource(R.string.auto_label))
+            }
             Text(
-                if (isAlwaysOn) {
-                    "$summary · ${stringResource(R.string.always_on_label)}"
-                } else {
-                    summary
-                },
+                parts.joinToString(" · "),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -389,6 +396,10 @@ private fun TunnelRow(
                         Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.more_actions))
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.run_conditions)) },
+                            onClick = { menuOpen = false; onConditionsClick() },
+                        )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.edit)) },
                             onClick = { menuOpen = false; onEditClick() },

@@ -7,11 +7,14 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.muelli.kabelwacht.R
+import com.github.muelli.kabelwacht.data.ConditionsStore
 import com.github.muelli.kabelwacht.data.ConfigStore
 import com.github.muelli.kabelwacht.data.TunnelProfile
 import com.github.muelli.kabelwacht.data.TunnelRepository
+import com.github.muelli.kabelwacht.data.TunnelRunConditions
 import com.github.muelli.kabelwacht.ui.UiMessage
 import com.github.muelli.kabelwacht.vpn.TunnelManager
+import com.github.muelli.kabelwacht.vpn.automation.AutomationEngine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,11 +23,15 @@ import kotlinx.coroutines.launch
 class TunnelListViewModel(
     private val repository: TunnelRepository,
     private val tunnelManager: TunnelManager,
+    private val conditionsStore: ConditionsStore? = null,
+    private val automationEngine: AutomationEngine? = null,
 ) : ViewModel() {
 
     val profiles: StateFlow<List<TunnelProfile>> = repository.profiles
     val activeTunnel: StateFlow<String?> = tunnelManager.activeTunnel
     val alwaysOnTunnel: kotlinx.coroutines.flow.Flow<String?> = tunnelManager.alwaysOnTunnel
+    val conditions: StateFlow<Map<String, TunnelRunConditions>> =
+        conditionsStore?.conditions ?: MutableStateFlow(emptyMap())
 
     private val _message = MutableStateFlow<UiMessage?>(null)
     /** Transient user-facing message (shown in a snackbar), or null. */
@@ -44,6 +51,7 @@ class TunnelListViewModel(
 
     /** Bring [profile] up (assumes VPN consent already granted) or down. */
     fun setActive(profile: TunnelProfile, up: Boolean) {
+        automationEngine?.onUserManualToggle(profile.name, up)
         viewModelScope.launch {
             runCatching { tunnelManager.setTunnelState(profile, up) }
                 .onFailure {

@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.github.muelli.kabelwacht.ui.conditions.RunConditionsScreen
 import com.github.muelli.kabelwacht.ui.edit.EditTunnelScreen
 import com.github.muelli.kabelwacht.ui.list.TunnelListScreen
 
@@ -17,6 +18,8 @@ object Routes {
     const val CREATE = "edit"
     const val EDIT = "edit/{name}"
     fun edit(name: String) = "edit/$name"
+    const val CONDITIONS = "conditions/{name}"
+    fun conditions(name: String) = "conditions/$name"
 }
 
 @Composable
@@ -29,6 +32,7 @@ fun KabelWachtNavHost() {
                 onCreate = { navController.navigate(Routes.CREATE) },
                 onEdit = { name -> navController.navigate(Routes.edit(name)) },
                 onImport = { navController.navigate(Routes.CREATE) },
+                onConditions = { name -> navController.navigate(Routes.conditions(name)) },
             )
         }
         composable(Routes.CREATE) {
@@ -46,6 +50,17 @@ fun KabelWachtNavHost() {
                 editName = backStackEntry.arguments?.getString("name"),
                 onDone = { navController.popBackStack() },
                 onCancel = { navController.popBackStack() },
+                onConditions = { tunnelName -> navController.navigate(Routes.conditions(tunnelName)) },
+            )
+        }
+        composable(
+            route = Routes.CONDITIONS,
+            arguments = listOf(navArgument("name") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val name = backStackEntry.arguments?.getString("name").orEmpty()
+            RunConditionsScreen(
+                tunnelName = name,
+                onDone = { navController.popBackStack() },
             )
         }
     }

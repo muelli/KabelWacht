@@ -3,6 +3,14 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Location is strictly optional: only requested if user configures Wi-Fi SSID filters -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- Camera is only used to scan WireGuard QR codes, and is optional. -->
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Re-confirm the user's identity before exporting a tunnel's private key. -->
@@ -39,5 +47,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".vpn.automation.ConditionMonitorService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Monitors network changes to connect or disconnect WireGuard tunnels automatically according to user run conditions" />
+        </service>
+
+        <receiver
+            android:name=".vpn.automation.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

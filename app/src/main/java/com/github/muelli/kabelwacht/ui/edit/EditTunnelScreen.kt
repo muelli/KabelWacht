@@ -59,6 +59,7 @@ fun EditTunnelScreen(
     editName: String?,
     onDone: () -> Unit,
     onCancel: () -> Unit,
+    onConditions: ((String) -> Unit)? = null,
     viewModel: EditTunnelViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     LaunchedEffect(editName) { viewModel.start(editName) }
@@ -107,6 +108,15 @@ fun EditTunnelScreen(
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            if (viewModel.isEditing && onConditions != null && editName != null) {
+                OutlinedButton(
+                    onClick = { onConditions(editName) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.run_conditions))
+                }
+            }
 
             viewModel.configError?.let {
                 Text(it.resolve(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)

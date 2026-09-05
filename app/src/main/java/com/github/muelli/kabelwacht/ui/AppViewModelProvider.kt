@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.muelli.kabelwacht.KabelWachtApp
+import com.github.muelli.kabelwacht.ui.conditions.RunConditionsViewModel
 import com.github.muelli.kabelwacht.ui.edit.EditTunnelViewModel
 import com.github.muelli.kabelwacht.ui.list.TunnelListViewModel
 
@@ -18,11 +19,23 @@ object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer {
             val app = kabelWachtApp()
-            TunnelListViewModel(app.container.repository, app.container.tunnelManager)
+            TunnelListViewModel(
+                repository = app.container.repository,
+                tunnelManager = app.container.tunnelManager,
+                conditionsStore = app.container.conditionsStore,
+                automationEngine = app.container.automationEngine,
+            )
         }
         initializer {
             val app = kabelWachtApp()
             EditTunnelViewModel(app.container.repository, app.container)
+        }
+        initializer {
+            val app = kabelWachtApp()
+            RunConditionsViewModel(
+                conditionsStore = app.container.conditionsStore,
+                networkMonitor = app.container.networkMonitor,
+            )
         }
     }
 

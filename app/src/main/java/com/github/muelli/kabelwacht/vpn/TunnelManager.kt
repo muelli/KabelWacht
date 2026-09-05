@@ -73,6 +73,19 @@ class TunnelManager(context: Context, private val settings: SettingsStore) {
         refreshActive()
     }
 
+    /**
+     * Bring down whatever tunnel is currently active, if any.
+     */
+    suspend fun bringDownActive() = withContext(Dispatchers.IO) {
+        backend.runningTunnelNames.forEach { running ->
+            val tunnel = tunnels.getOrPut(running) {
+                WgTunnel(running) { refreshActive() }
+            }
+            bringDown(tunnel)
+        }
+        refreshActive()
+    }
+
     private fun bringDown(tunnel: WgTunnel) {
         runCatching { backend.setState(tunnel, Tunnel.State.DOWN, null) }
     }
