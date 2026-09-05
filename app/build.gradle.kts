@@ -31,7 +31,7 @@ val isReleaseTag = try {
 val appVersionName = if (isReleaseTag) appVersionCode.toString() else "$appVersionCode-rc"
 android {
     namespace = "com.github.muelli.kabelwacht"
-    compileSdk = 35
+    compileSdk = 36
     // Needed so the app's packaging step can strip the native libraries built by
     // the :tunnel module (otherwise libwg-go.so ships unstripped, ~8 MB/ABI).
     ndkVersion = "27.2.12479018"
@@ -39,7 +39,7 @@ android {
     defaultConfig {
         applicationId = "com.github.muelli.kabelwacht"
         minSdk = 29
-        targetSdk = 35
+        targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersionName
 

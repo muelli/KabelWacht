@@ -18,9 +18,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -74,6 +76,7 @@ import com.github.muelli.kabelwacht.data.TunnelProfile
 import com.github.muelli.kabelwacht.data.TunnelSearch
 import com.github.muelli.kabelwacht.ui.AppViewModelProvider
 import com.github.muelli.kabelwacht.ui.UiMessage
+import com.github.muelli.kabelwacht.ui.theme.MaxContentWidth
 import com.github.muelli.kabelwacht.util.confirmDeviceCredential
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
@@ -316,21 +319,31 @@ fun TunnelListScreen(
                 )
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-                items(shown, key = { it.name }) { profile ->
-                    TunnelRow(
-                        profile = profile,
-                        isActive = activeTunnel == profile.name,
-                        isAlwaysOn = alwaysOnTunnel == profile.name,
-                        hasConditions = conditions[profile.name]?.enabled == true,
-                        onToggle = { up -> toggle(profile, up) },
-                        onClick = { onEdit(profile.name) },
-                        onEditClick = { onEdit(profile.name) },
-                        onConditionsClick = { onConditions(profile.name) },
-                        onExportClick = { toExport = profile },
-                        onDeleteClick = { toDelete = profile },
-                    )
-                    HorizontalDivider()
+            Box(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .widthIn(max = MaxContentWidth)
+                        .fillMaxWidth(),
+                ) {
+                    items(shown, key = { it.name }) { profile ->
+                        TunnelRow(
+                            profile = profile,
+                            isActive = activeTunnel == profile.name,
+                            isAlwaysOn = alwaysOnTunnel == profile.name,
+                            hasConditions = conditions[profile.name]?.enabled == true,
+                            onToggle = { up -> toggle(profile, up) },
+                            onClick = { onEdit(profile.name) },
+                            onEditClick = { onEdit(profile.name) },
+                            onConditionsClick = { onConditions(profile.name) },
+                            onExportClick = { toExport = profile },
+                            onDeleteClick = { toDelete = profile },
+                        )
+                        HorizontalDivider()
+                    }
                 }
             }
         }

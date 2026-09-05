@@ -20,7 +20,7 @@ val appPackage = "com.github.muelli.kabelwacht"
 
 android {
     namespace = "com.wireguard.android.tunnel"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "27.2.12479018"
 
     compileOptions {

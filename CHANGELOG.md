@@ -26,6 +26,10 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 ### Changed
 - Importing a configuration (QR or file) that exactly matches a stored tunnel
   now says so instead of offering a second import.
+- Better desktop-mode and large-screen support: the app now targets Android 16
+  (API 36), declares itself freely resizable for desktop windowing, and its
+  screens stay a readable centered pane instead of stretching across wide
+  windows.
 
 ## [6] — versionCode 6
 
