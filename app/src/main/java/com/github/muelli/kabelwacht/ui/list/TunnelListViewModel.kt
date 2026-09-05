@@ -4,6 +4,9 @@
 package com.github.muelli.kabelwacht.ui.list
 
 import android.content.Intent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.muelli.kabelwacht.R
@@ -26,6 +29,24 @@ class TunnelListViewModel(
     private val conditionsStore: ConditionsStore? = null,
     private val automationEngine: AutomationEngine? = null,
 ) : ViewModel() {
+
+    var searchActive by mutableStateOf(false)
+        private set
+    var searchQuery by mutableStateOf("")
+        private set
+
+    fun openSearch() {
+        searchActive = true
+    }
+
+    fun closeSearch() {
+        searchActive = false
+        searchQuery = ""
+    }
+
+    fun onSearchQueryChange(value: String) {
+        searchQuery = value
+    }
 
     val profiles: StateFlow<List<TunnelProfile>> = repository.profiles
     val activeTunnel: StateFlow<String?> = tunnelManager.activeTunnel

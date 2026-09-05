@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.os.SystemClock
 import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -18,14 +19,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.FileOpen
 import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -43,14 +47,20 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,6 +71,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.muelli.kabelwacht.R
 import com.github.muelli.kabelwacht.appContainer
 import com.github.muelli.kabelwacht.data.TunnelProfile
+import com.github.muelli.kabelwacht.data.TunnelSearch
 import com.github.muelli.kabelwacht.ui.AppViewModelProvider
 import com.github.muelli.kabelwacht.ui.UiMessage
 import com.github.muelli.kabelwacht.util.confirmDeviceCredential
@@ -202,18 +213,62 @@ fun TunnelListScreen(
     var addMenuOpen by remember { mutableStateOf(false) }
     var toDelete by remember { mutableStateOf<TunnelProfile?>(null) }
 
+    // Leaving the search collapses it (before falling through to the system back).
+    BackHandler(enabled = viewModel.searchActive) { viewModel.closeSearch() }
+    val searchFocus = remember { FocusRequester() }
+    LaunchedEffect(viewModel.searchActive) {
+        if (viewModel.searchActive) searchFocus.requestFocus()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { EasterEggTitle() },
-                actions = {
-                    IconButton(onClick = {
-                        runCatching { context.startActivity(Intent(Settings.ACTION_VPN_SETTINGS)) }
-                    }) {
-                        Icon(
-                            Icons.Outlined.Shield,
-                            contentDescription = stringResource(R.string.always_on_settings),
+                title = {
+                    if (viewModel.searchActive) {
+                        TextField(
+                            value = viewModel.searchQuery,
+                            onValueChange = viewModel::onSearchQueryChange,
+                            placeholder = { Text(stringResource(R.string.search_placeholder)) },
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(searchFocus),
                         )
+                    } else {
+                        EasterEggTitle()
+                    }
+                },
+                actions = {
+                    if (viewModel.searchActive) {
+                        IconButton(onClick = viewModel::closeSearch) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = stringResource(R.string.close_search),
+                            )
+                        }
+                    } else {
+                        // A search over a handful of tunnels is noise (same threshold
+                        // as the repository landing page).
+                        if (profiles.size >= SEARCH_MIN_TUNNELS) {
+                            IconButton(onClick = viewModel::openSearch) {
+                                Icon(
+                                    Icons.Outlined.Search,
+                                    contentDescription = stringResource(R.string.search_tunnels),
+                                )
+                            }
+                        }
+                        IconButton(onClick = {
+                            runCatching { context.startActivity(Intent(Settings.ACTION_VPN_SETTINGS)) }
+                        }) {
+                            Icon(
+                                Icons.Outlined.Shield,
+                                contentDescription = stringResource(R.string.always_on_settings),
+                            )
+                        }
                     }
                 },
             )
@@ -244,11 +299,25 @@ fun TunnelListScreen(
             }
         },
     ) { padding ->
+        val shown = remember(profiles, viewModel.searchQuery) {
+            TunnelSearch.filter(profiles, viewModel.searchQuery)
+        }
         if (profiles.isEmpty()) {
             EmptyState(padding)
+        } else if (shown.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    stringResource(R.string.no_search_results),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-                items(profiles, key = { it.name }) { profile ->
+                items(shown, key = { it.name }) { profile ->
                     TunnelRow(
                         profile = profile,
                         isActive = activeTunnel == profile.name,
@@ -336,6 +405,9 @@ private fun EasterEggTitle() {
 
 private const val EASTER_EGG_TAPS = 5
 private const val TAP_WINDOW_MS = 2000L
+
+/** Below this many tunnels the search icon stays hidden — filtering adds nothing. */
+private const val SEARCH_MIN_TUNNELS = 4
 
 @Composable
 private fun EmptyState(padding: PaddingValues) {

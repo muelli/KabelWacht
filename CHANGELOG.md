@@ -7,6 +7,9 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 ## [Unreleased]
 
 ### Added
+- Search in the tunnel list (shown from four tunnels up): matches the tunnel
+  name first, then endpoints, DNS, addresses and allowed IPs — never key
+  material.
 - **Run conditions**: tunnels can connect and disconnect automatically based
   on the current network — only on Wi-Fi, all Wi-Fis except chosen networks,
   only specific Wi-Fis, never (or only) on mobile data or roaming, Ethernet
