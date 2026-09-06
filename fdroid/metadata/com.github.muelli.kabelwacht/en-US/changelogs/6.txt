@@ -1,0 +1,9 @@
+The tunnel editor now shows structured Interface and Peer sections with
+typed fields, masked keys and one-tap key generation; the raw wg-quick
+text stays available in a collapsed expander.
+
+New: export a tunnel as a standard wg-quick file, protected by device
+authentication (it contains the private key). Tip: enrolling another
+device freshly is usually better than copying credentials.
+
+The listing now includes screenshots.
