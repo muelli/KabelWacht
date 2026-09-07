@@ -8,7 +8,7 @@ public source — the guarantee F-Droid's "Reproducible Builds" status is based 
 ## Toolchain
 
 - JDK 17 (Temurin)
-- Android SDK, compile/target SDK 35
+- Android SDK, compile/target SDK 36
 - **NDK 27.2.12479018** and **CMake 3.22.1**
 - Gradle via the committed wrapper
 
