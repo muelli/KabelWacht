@@ -67,6 +67,7 @@ import com.github.muelli.kabelwacht.data.NetworkStateSnapshot
 import com.github.muelli.kabelwacht.data.WifiConditionMode
 import com.github.muelli.kabelwacht.ui.AppViewModelProvider
 import com.github.muelli.kabelwacht.ui.theme.MaxContentWidth
+import com.github.muelli.kabelwacht.vpn.automation.ConditionMonitorService
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -95,6 +96,12 @@ fun RunConditionsScreen(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { grants ->
         hasLocationPermission = grants[Manifest.permission.ACCESS_FINE_LOCATION] == true
+        if (hasLocationPermission) {
+            // Nudge the monitor service so it re-asserts its foreground type and
+            // gains background SSID access right away (it stops itself again if
+            // no tunnel has rules enabled).
+            ConditionMonitorService.sync(context, true)
+        }
     }
 
     val networkSnapshot by viewModel.networkSnapshot.collectAsStateWithLifecycle()
