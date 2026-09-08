@@ -11,6 +11,7 @@ import android.net.NetworkRequest
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import androidx.annotation.RequiresApi
 import com.github.muelli.kabelwacht.data.NetworkStateSnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +39,19 @@ class NetworkStateMonitor(
     private val activeNetworks = mutableMapOf<Network, NetworkCapabilities>()
     private var isRegistered = false
 
-    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+    /**
+     * From API 31 the system redacts the SSID out of the callback's
+     * `transportInfo` unless the callback opts in with
+     * FLAG_INCLUDE_LOCATION_INFO (and fine location is granted); the older
+     * WifiManager fallback is background-restricted. Opting in is what keeps
+     * SSID rules working while monitoring runs in the background.
+     */
+    private inner class Callback : ConnectivityManager.NetworkCallback {
+        constructor() : super()
+
+        @RequiresApi(Build.VERSION_CODES.S)
+        constructor(flags: Int) : super(flags)
+
         override fun onAvailable(network: Network) {
             val caps = connectivityManager?.getNetworkCapabilities(network)
             if (caps != null && isPhysicalInternetNetwork(caps)) {
@@ -70,6 +83,13 @@ class NetworkStateMonitor(
             updateSnapshot()
         }
     }
+
+    private val networkCallback: ConnectivityManager.NetworkCallback =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Callback(ConnectivityManager.NetworkCallback.FLAG_INCLUDE_LOCATION_INFO)
+        } else {
+            Callback()
+        }
 
     init {
         start()

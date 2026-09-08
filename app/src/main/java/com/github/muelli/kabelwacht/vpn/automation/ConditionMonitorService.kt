@@ -3,6 +3,7 @@
 
 package com.github.muelli.kabelwacht.vpn.automation
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,11 +11,13 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import androidx.core.content.ContextCompat
 import com.github.muelli.kabelwacht.MainActivity
 import com.github.muelli.kabelwacht.R
 import com.github.muelli.kabelwacht.appContainer
@@ -53,6 +56,13 @@ class ConditionMonitorService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Re-assert the foreground declaration: if location was granted since
+        // the service started, this picks up the location service type (and with
+        // it, background SSID access) without a restart.
+        startInForeground(
+            getString(R.string.automation_service_notification_title),
+            getString(R.string.automation_service_notification_text),
+        )
         return START_STICKY
     }
 
@@ -63,16 +73,20 @@ class ConditionMonitorService : Service() {
 
     private fun startInForeground(title: String, text: String) {
         val notification = buildNotification(title, text)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val fgsType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-            } else {
-                0
-            }
-            ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, fgsType)
+        var fgsType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
         } else {
-            startForeground(NOTIFICATION_ID, notification)
+            0
         }
+        // The location service type is what entitles background SSID reads for
+        // Wi-Fi rules — but declaring it without the permission actually granted
+        // throws on Android 14+, so it is added conditionally.
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+        }
+        ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, fgsType)
     }
 
     private fun buildNotification(title: String, text: String): Notification {
