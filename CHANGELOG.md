@@ -23,6 +23,12 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
   explains how to contribute a language.
 - A little easter egg in the tunnel list.
 
+### Fixed
+- Wi-Fi SSID rules now keep working while monitoring in the background: the
+  network callback opts into location info (Android 12+ redacts the SSID
+  otherwise) and the monitor service assumes the `location` foreground type —
+  only while location permission is actually granted.
+
 ### Changed
 - Importing a configuration (QR or file) that exactly matches a stored tunnel
   now says so instead of offering a second import.
