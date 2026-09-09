@@ -5,6 +5,7 @@ package com.github.muelli.kabelwacht
 
 import android.app.Application
 import android.content.Context
+import android.widget.Toast
 import com.github.muelli.kabelwacht.data.ConditionsStore
 import com.github.muelli.kabelwacht.data.ConfigStore
 import com.github.muelli.kabelwacht.data.SettingsStore
@@ -13,12 +14,17 @@ import com.github.muelli.kabelwacht.vpn.TunnelManager
 import com.github.muelli.kabelwacht.vpn.automation.AutomationEngine
 import com.github.muelli.kabelwacht.vpn.automation.ConditionMonitorService
 import com.github.muelli.kabelwacht.vpn.automation.NetworkStateMonitor
+import com.github.muelli.kabelwacht.util.TunnelShortcuts
+import com.github.muelli.kabelwacht.widget.TunnelWidgetProvider
+import com.github.muelli.kabelwacht.widget.TunnelWidgetState
 import com.wireguard.android.backend.GoBackend
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Application entry point. Owns the [AppContainer] (manual dependency injection —
@@ -37,6 +43,7 @@ class KabelWachtApp : Application() {
 
 /** Long-lived singletons shared across the app. */
 class AppContainer(context: Context) {
+    private val appContext = context.applicationContext
     val settings: SettingsStore = SettingsStore(context)
     val conditionsStore: ConditionsStore = ConditionsStore(context)
     val repository: TunnelRepository = TunnelRepository(ConfigStore(context), conditionsStore)
@@ -59,6 +66,11 @@ class AppContainer(context: Context) {
     // callback may fire while no Activity exists).
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    // Declared before init: the collector launched there assigns it, and a property
+    // initializer running afterwards would silently reset a fast first emission.
+    @Volatile
+    private var latestWidgetState: TunnelWidgetState? = null
+
     init {
         // Sync foreground monitor service lifecycle with active automations
         scope.launch {
@@ -71,6 +83,61 @@ class AppContainer(context: Context) {
         // up the remembered tunnel (falling back to the only/first one).
         GoBackend.setAlwaysOnCallback {
             scope.launch { activateAlwaysOn() }
+        }
+
+        // Keep the launcher shortcuts and the home-screen widget in step with the
+        // profiles and the tunnel state.
+        scope.launch {
+            repository.profiles.collect { TunnelShortcuts.sync(appContext, it) }
+        }
+        scope.launch {
+            combine(
+                repository.profiles,
+                tunnelManager.activeTunnel,
+                settings.alwaysOnTunnel,
+            ) { profiles, active, remembered ->
+                TunnelWidgetState(
+                    activeName = active,
+                    targetName = active
+                        ?: remembered?.takeIf { r -> profiles.any { it.name == r } }
+                        ?: profiles.firstOrNull()?.name,
+                )
+            }.collect { state ->
+                latestWidgetState = state
+                TunnelWidgetProvider.render(appContext, state)
+            }
+        }
+    }
+
+    /** Re-render the widget(s) from the latest known state (e.g. one was just added). */
+    fun renderWidgets() {
+        val state = latestWidgetState ?: TunnelWidgetState(
+            activeName = tunnelManager.activeTunnel.value,
+            targetName = tunnelManager.activeTunnel.value
+                ?: repository.profiles.value.firstOrNull()?.name,
+        )
+        TunnelWidgetProvider.render(appContext, state)
+    }
+
+    /**
+     * Toggle [name] from a one-tap entry point (shortcut/widget). Runs on the
+     * application scope so a finishing trampoline activity cannot cancel it;
+     * failures surface as a toast since no screen is around to show them.
+     */
+    fun toggleTunnel(name: String, up: Boolean) {
+        val profile = repository.get(name) ?: return
+        automationEngine.onUserManualToggle(name, up)
+        scope.launch {
+            val result = runCatching { tunnelManager.setTunnelState(profile, up) }
+            result.exceptionOrNull()?.let { e ->
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        appContext,
+                        e.message ?: appContext.getString(R.string.error_tunnel_state),
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+            }
         }
     }
 
