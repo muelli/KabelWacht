@@ -3,6 +3,7 @@
 
 package com.github.muelli.kabelwacht
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
@@ -54,6 +55,9 @@ class TunnelTileService : TileService() {
         }
     }
 
+    // The deprecated Intent overload is only reached below API 34, where the
+    // PendingIntent overload does not exist yet.
+    @SuppressLint("StartActivityAndCollapseDeprecated")
     private fun toggle(name: String) {
         val container = appContainer
         val up = container.tunnelManager.activeTunnel.value != name
