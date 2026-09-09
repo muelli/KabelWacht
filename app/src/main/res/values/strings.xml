@@ -68,6 +68,18 @@
     <string name="always_on_settings">Always-on VPN settings</string>
     <string name="always_on_label">Always-on</string>
 
+    <!-- Quick toggles: launcher shortcuts and the home-screen widget -->
+    <string name="shortcut_toggle_label">Toggle "%1$s"</string>
+    <string name="widget_label">Tunnel toggle</string>
+    <string name="widget_description">Toggle a WireGuard tunnel with one tap.</string>
+    <string name="widget_no_tunnel">No tunnel yet</string>
+    <string name="widget_open_app">Tap to open KabelWacht</string>
+    <string name="widget_connected">Connected</string>
+    <string name="widget_tap_to_connect">Tap to connect</string>
+    <string name="toggle_connecting">Connecting "%1$s"…</string>
+    <string name="toggle_disconnecting">Disconnecting "%1$s"…</string>
+    <string name="toggle_unknown_tunnel">Tunnel "%1$s" no longer exists.</string>
+
     <!-- Export -->
     <string name="export">Export</string>
     <string name="export_warning_title">Export tunnel configuration?</string>
