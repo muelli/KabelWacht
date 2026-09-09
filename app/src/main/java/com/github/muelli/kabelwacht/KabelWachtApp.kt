@@ -109,14 +109,21 @@ class AppContainer(context: Context) {
         }
     }
 
-    /** Re-render the widget(s) from the latest known state (e.g. one was just added). */
-    fun renderWidgets() {
-        val state = latestWidgetState ?: TunnelWidgetState(
+    /**
+     * The tunnel the one-tap surfaces (widget, QS tile) act on and its state:
+     * the latest observed combination, or a synchronous approximation before
+     * the collector's first emission.
+     */
+    fun quickToggleState(): TunnelWidgetState =
+        latestWidgetState ?: TunnelWidgetState(
             activeName = tunnelManager.activeTunnel.value,
             targetName = tunnelManager.activeTunnel.value
                 ?: repository.profiles.value.firstOrNull()?.name,
         )
-        TunnelWidgetProvider.render(appContext, state)
+
+    /** Re-render the widget(s) from the latest known state (e.g. one was just added). */
+    fun renderWidgets() {
+        TunnelWidgetProvider.render(appContext, quickToggleState())
     }
 
     /**

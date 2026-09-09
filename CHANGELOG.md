@@ -7,9 +7,10 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 ## [Unreleased]
 
 ### Added
-- **Launcher shortcuts** (long-press the app icon) and a **home-screen
-  widget** to toggle a tunnel with one tap. The widget shows the active
-  tunnel — or the most recently used one — and its state.
+- **Launcher shortcuts** (long-press the app icon), a **home-screen widget**
+  and a **Quick Settings tile** to toggle a tunnel with one tap. Widget and
+  tile show the active tunnel — or the most recently used one — and its
+  state; on a locked device the tile toggles only after unlocking.
 - Search in the tunnel list (shown from four tunnels up): matches the tunnel
   name first, then endpoints, DNS, addresses and allowed IPs — never key
   material.
