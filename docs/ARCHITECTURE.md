@@ -20,13 +20,22 @@ com.github.muelli.kabelwacht
 ├── data/
 │   ├── TunnelProfile    name + parsed com.wireguard.config.Config
 │   ├── ConfigStore      one wg-quick .conf per tunnel in filesDir/tunnels/
-│   └── TunnelRepository single source of truth; exposes StateFlow<List<…>>
+│   ├── TunnelRepository single source of truth; exposes StateFlow<List<…>>
+│   ├── TunnelSearch     ranked list search (name first, then config data)
+│   ├── TunnelRunConditions  automation rules + pure shouldRun() evaluation
+│   └── ConditionsStore  one key=value rules file per tunnel in filesDir/conditions/
 ├── vpn/
 │   ├── WgTunnel         com.wireguard.android.backend.Tunnel adapter
-│   └── TunnelManager    wraps GoBackend; one active tunnel; VPN consent
+│   ├── TunnelManager    wraps GoBackend; one active tunnel; VPN consent
+│   └── automation/
+│       ├── NetworkStateMonitor    physical-network (never VPN) snapshots
+│       ├── AutomationEngine       debounces, evaluates rules, drives TunnelManager
+│       ├── ConditionMonitorService  foreground service, alive only while rules exist
+│       └── BootReceiver           resumes monitoring after reboot
 └── ui/
-    ├── list/            tunnel list screen + ViewModel (activate/delete)
+    ├── list/            tunnel list screen + ViewModel (activate/delete/search)
     ├── edit/            create/edit/import screen + ViewModel (validates config)
+    ├── conditions/      per-tunnel run-conditions screen + ViewModel
     ├── nav/             navigation graph
     ├── theme/           Material 3 theme
     └── AppViewModelProvider  ViewModel factories wired from AppContainer
@@ -42,6 +51,13 @@ com.github.muelli.kabelwacht
 3. **Connecting.** `TunnelManager` holds a single `GoBackend`. Bringing a tunnel up
    first requests VPN consent (`VpnService.prepare`) if needed, then calls
    `backend.setState(tunnel, UP, config)`. Only one tunnel is active at a time.
+4. **Automation.** `NetworkStateMonitor` observes physical networks (a
+   `NET_CAPABILITY_NOT_VPN` request, so the tunnel can never re-trigger itself);
+   `AutomationEngine` combines those snapshots with the stored
+   `TunnelRunConditions`, debounces, and connects/disconnects via `TunnelManager` —
+   respecting a manual off-toggle until the network next changes. The foreground
+   `ConditionMonitorService` exists only while at least one tunnel has rules
+   enabled.
 
 ## Dependency injection
 

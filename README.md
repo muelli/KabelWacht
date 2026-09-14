@@ -8,7 +8,7 @@
 A simple, fully **free-software** [WireGuard](https://www.wireguard.com/) VPN client
 for Android. It manages tunnel profiles and connects — nothing more.
 
-- **Create, list, edit and delete** WireGuard profiles.
+- **Create, list, search, edit and delete** WireGuard profiles.
 - **Import** a configuration by **scanning a QR code** or opening a **`.conf` file**;
   **export** a tunnel back to a standard wg-quick `.conf` (guarded by device
   authentication — the file contains the private key).
@@ -16,10 +16,16 @@ for Android. It manages tunnel profiles and connects — nothing more.
 - **Always-on VPN** support: enable it from the shield action in the app (opens the
   system VPN settings) and Android reconnects your most recently used tunnel
   automatically — including after a reboot, and with the optional kill-switch.
+- **Run conditions**: connect and disconnect a tunnel automatically based on the
+  current network — only on Wi-Fi, all Wi-Fis except chosen networks, only specific
+  Wi-Fis, never (or only) on mobile data or roaming, unmetered networks only.
+  Reading Wi-Fi names needs Android's location permission, requested only if SSID
+  rules are used; GPS is never touched.
 - **No trackers, no analytics, no ads, no Google Play Services.** The only network
   connection the app makes is your own WireGuard tunnel — see the
   [privacy policy](docs/PRIVACY.md).
-- Ready to build on **F-Droid** and in **GitHub CI**.
+- Built, tested and released entirely in **GitHub CI**, with byte-reproducible
+  release builds.
 
 ## Free-software dependencies
 
@@ -38,7 +44,7 @@ copyleft on them and they impose none on the app.
 
 ## Building
 
-Requirements: JDK 17, the Android SDK (compile/target SDK 35, min SDK 29), plus the
+Requirements: JDK 17, the Android SDK (compile/target SDK 36, min SDK 29), plus the
 **NDK 27.2.12479018** and **CMake 3.22.1** (WireGuard is built from source, see below).
 Clone with submodules:
 
@@ -84,9 +90,11 @@ results. Verify locally:
 
 ```
 app/src/main/java/com/github/muelli/kabelwacht/
-├── data/        ConfigStore (file-per-tunnel), TunnelRepository, TunnelProfile
+├── data/        ConfigStore (file-per-tunnel), TunnelRepository, TunnelSearch,
+│                TunnelRunConditions + ConditionsStore (automation rules)
 ├── vpn/         TunnelManager (wraps GoBackend), WgTunnel
-├── ui/          Compose screens: list/, edit/, nav/, theme/
+│   └── automation/   NetworkStateMonitor, AutomationEngine, monitor service
+├── ui/          Compose screens: list/, edit/, conditions/, nav/, theme/
 ├── KabelWachtApp.kt   Application + manual DI container
 └── MainActivity.kt
 ```
@@ -157,14 +165,10 @@ emulator + the `android-35` x86_64 system image and a JDK 17.
 
 ## F-Droid
 
-The repository is F-Droid-ready: FOSS-only dependencies, tagged releases, and
-[fastlane metadata](fastlane/metadata/android/en-US/) for the listing.
-
-Inclusion in the official F-Droid catalogue is a separate step: submit a metadata
-recipe to [fdroiddata](https://gitlab.com/fdroid/fdroiddata). A ready-to-adapt
-template lives at
+The store listing (descriptions, icon, screenshots, changelogs) comes from the
+[fastlane metadata](fastlane/metadata/android/en-US/) in this repository;
 [`fdroid/com.github.muelli.kabelwacht.yml`](fdroid/com.github.muelli.kabelwacht.yml)
-(update the repository URLs first).
+is the app's build/listing metadata, consumed by the publishing workflow below.
 
 ### Self-hosted F-Droid repository (auto-published)
 
@@ -213,10 +217,10 @@ writes a landing page at `https://<owner>.github.io/<repo>/` with the URL,
 fingerprint, and a tap-to-add link. If the seeds are absent the workflow logs a
 notice and skips, so it never breaks a tag push.
 
-## Scope (v1)
+## Scope
 
-One active tunnel at a time. Always-on VPN, per-app split tunnelling, and in-app key
-generation are intentionally out of scope for the first version.
+One active tunnel at a time. Per-app split tunnelling is intentionally out of scope
+for now.
 
 ## Trademark
 
