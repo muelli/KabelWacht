@@ -14,6 +14,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,8 +62,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -219,11 +228,37 @@ fun TunnelListScreen(
     // Leaving the search collapses it (before falling through to the system back).
     BackHandler(enabled = viewModel.searchActive) { viewModel.closeSearch() }
     val searchFocus = remember { FocusRequester() }
+    // The screen itself holds focus so hardware-keyboard shortcuts work without
+    // a prior tap; opening the search hands focus to its text field and closing
+    // it hands focus back.
+    val screenFocus = remember { FocusRequester() }
     LaunchedEffect(viewModel.searchActive) {
-        if (viewModel.searchActive) searchFocus.requestFocus()
+        val target = if (viewModel.searchActive) searchFocus else screenFocus
+        runCatching { target.requestFocus() }
     }
 
     Scaffold(
+        modifier = Modifier
+            .focusRequester(screenFocus)
+            .focusable()
+            .onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                when {
+                    event.isCtrlPressed && event.key == Key.F -> {
+                        viewModel.openSearch()
+                        true
+                    }
+                    event.isCtrlPressed && event.key == Key.N -> {
+                        onCreate()
+                        true
+                    }
+                    event.key == Key.Escape && viewModel.searchActive -> {
+                        viewModel.closeSearch()
+                        true
+                    }
+                    else -> false
+                }
+            },
         topBar = {
             TopAppBar(
                 title = {
@@ -395,24 +430,28 @@ private fun EasterEggTitle() {
     var lastTap by remember { mutableStateOf(0L) }
     Text(
         stringResource(R.string.app_name),
-        modifier = Modifier.clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null,
-        ) {
-            val now = SystemClock.uptimeMillis()
-            taps = if (now - lastTap <= TAP_WINDOW_MS) taps + 1 else 1
-            lastTap = now
-            if (taps >= EASTER_EGG_TAPS) {
-                taps = 0
-                val version = context.packageManager
-                    .getPackageInfo(context.packageName, 0).versionName
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.version_toast, version),
-                    Toast.LENGTH_SHORT,
-                ).show()
-            }
-        },
+        modifier = Modifier
+            // Not part of keyboard traversal: with the ripple suppressed a focus
+            // stop here would be invisible, and the egg stays a touch gesture.
+            .focusProperties { canFocus = false }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) {
+                val now = SystemClock.uptimeMillis()
+                taps = if (now - lastTap <= TAP_WINDOW_MS) taps + 1 else 1
+                lastTap = now
+                if (taps >= EASTER_EGG_TAPS) {
+                    taps = 0
+                    val version = context.packageManager
+                        .getPackageInfo(context.packageName, 0).versionName
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.version_toast, version),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            },
     )
 }
 
@@ -458,7 +497,18 @@ private fun TunnelRow(
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            // Hardware keyboard: Delete on a focused row asks to delete it
+            // (the same confirmation dialog as the menu action).
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown && event.key == Key.Delete) {
+                    onDeleteClick()
+                    true
+                } else {
+                    false
+                }
+            },
         headlineContent = { Text(profile.name) },
         supportingContent = {
             val summary = profileEndpoint(profile) ?: stringResource(R.string.no_endpoint)
