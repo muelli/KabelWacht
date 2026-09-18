@@ -62,6 +62,11 @@ jobs:
       - name: Set up Android SDK
         if: steps.gate.outputs.ready == 'true'
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          # The action's default is "tools platform-tools"; Google removed the
+          # obsolete "tools" package from the SDK repository, so the default makes
+          # sdkmanager exit 1. NDK and CMake are installed in the next step.
+          packages: platform-tools
 
       - name: Install NDK and CMake
         if: steps.gate.outputs.ready == 'true'
