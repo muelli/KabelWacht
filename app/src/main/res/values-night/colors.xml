@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Tobias Mueller and KabelWacht contributors
+-->
+<resources>
+    <color name="widget_background">#1D211E</color>
+    <color name="widget_text">#E8EAE8</color>
+    <color name="widget_text_secondary">#A5AAA6</color>
+    <color name="widget_accent">#93D5AC</color>
+</resources>

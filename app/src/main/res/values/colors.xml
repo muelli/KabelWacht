@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Tobias Mueller and KabelWacht contributors
+
+Colors for RemoteViews surfaces (the home-screen widget), which cannot use
+Compose theming. Values mirror the app palette; night variants in values-night.
+-->
+<resources>
+    <color name="widget_background">#F5F6F5</color>
+    <color name="widget_text">#1A1A1A</color>
+    <color name="widget_text_secondary">#555555</color>
+    <color name="widget_accent">#2E6C4D</color>
+</resources>

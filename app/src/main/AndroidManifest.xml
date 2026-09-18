@@ -52,6 +52,45 @@
             </intent-filter>
         </activity>
 
+        <!-- Invisible trampoline for launcher shortcuts and the widget: toggles a
+             tunnel (running the VPN consent flow if needed) and finishes. Exported
+             because the launcher fires shortcut intents; the only reachable effect
+             is a toast-announced tunnel toggle. -->
+        <activity
+            android:name=".TunnelActionActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- Quick Settings tile toggling the same tunnel the widget shows. Exported
+             with the system-only BIND_QUICK_SETTINGS_TILE permission, as required. -->
+        <service
+            android:name=".TunnelTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_tunnel"
+            android:label="@string/widget_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
+
+        <receiver
+            android:name=".widget.TunnelWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_tunnel_info" />
+        </receiver>
+
         <service
             android:name=".vpn.automation.ConditionMonitorService"
             android:exported="false"
