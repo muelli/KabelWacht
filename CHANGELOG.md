@@ -4,16 +4,9 @@ All notable changes to KabelWacht are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Per-release notes shown
 in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
-## [Unreleased]
+## [96] — versionCode 96
 
 ### Added
-- **Launcher shortcuts** (long-press the app icon), a **home-screen widget**
-  and a **Quick Settings tile** to toggle a tunnel with one tap. Widget and
-  tile show the active tunnel — or the most recently used one — and its
-  state; on a locked device the tile toggles only after unlocking.
-- Search in the tunnel list (shown from four tunnels up): matches the tunnel
-  name first, then endpoints, DNS, addresses and allowed IPs — never key
-  material.
 - **Run conditions**: tunnels can connect and disconnect automatically based
   on the current network — only on Wi-Fi, all Wi-Fis except chosen networks,
   only specific Wi-Fis, never (or only) on mobile data or roaming, Ethernet
@@ -21,19 +14,47 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
   location permission, which is requested only if SSID rules are used; GPS is
   never touched. A lightweight foreground service watches for network changes
   only while at least one tunnel has conditions enabled.
-- New tunnels (blank or imported) are prefilled with a free auto-generated
-  name (`wg-tunnel-1`, `wg-tunnel-2`, …).
+- **Launcher shortcuts** (long-press the app icon), a **home-screen widget**
+  and a **Quick Settings tile** to toggle a tunnel with one tap. Widget and
+  tile show the active tunnel — or the most recently used one — and its
+  state; on a locked device the tile toggles only after unlocking.
+- **Search** in the tunnel list (shown from four tunnels up): matches the
+  tunnel name first, then endpoints, DNS, addresses and allowed IPs — never
+  key material.
+
+### Changed
+- Better desktop-mode and large-screen support: the app now targets Android 16
+  (API 36), declares itself freely resizable for desktop windowing, and its
+  screens stay a readable centered pane instead of stretching across wide
+  windows.
+
+### Fixed
+- Location is requested as coarse *and* fine together, as Android 12+
+  requires; a fine-only request was silently denied there, leaving Wi-Fi SSID
+  rules unable to read network names.
+
+## [81] — versionCode 81
+
+### Fixed
+- Release APKs are signed with `--alignment-preserved` so F-Droid's
+  reproducible-build verification can match them, and the repository landing
+  page no longer emits an invalid `fdroidrepos:` link.
+
+## [77] — versionCode 77
+
+### Added
 - All user-visible strings are now translatable resources; `CONTRIBUTING.md`
   explains how to contribute a language.
+- New tunnels (blank or imported) are prefilled with a free auto-generated
+  name (`wg-tunnel-1`, `wg-tunnel-2`, …).
+- Continuous release-candidate builds: every push to `main` is published to
+  the project's own F-Droid repository as an `-rc` version, which clients do
+  not auto-update to.
 - A little easter egg in the tunnel list.
 
 ### Changed
 - Importing a configuration (QR or file) that exactly matches a stored tunnel
   now says so instead of offering a second import.
-- Better desktop-mode and large-screen support: the app now targets Android 16
-  (API 36), declares itself freely resizable for desktop windowing, and its
-  screens stay a readable centered pane instead of stretching across wide
-  windows.
 
 ## [6] — versionCode 6
 
