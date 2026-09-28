@@ -4,6 +4,21 @@ All notable changes to KabelWacht are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Per-release notes shown
 in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
+## [99] — versionCode 99
+
+### Fixed
+- Wi-Fi SSID rules keep working while monitoring in the background. Even with
+  location permission granted, Android 12+ redacts the network name from the
+  callback unless it opts in, and the older lookup is background-restricted —
+  so "all Wi-Fis except home" could leave the tunnel up at home. The callback
+  now opts in, and the monitor service takes the `location` foreground type
+  while (and only while) the permission is actually granted.
+
+### Changed
+- CI installs the Android SDK without the obsolete `tools` package, which
+  Google removed and which broke every build; the SDK setup action is updated
+  to 4.0.4.
+
 ## [96] — versionCode 96
 
 ### Added
@@ -51,12 +66,6 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
   the project's own F-Droid repository as an `-rc` version, which clients do
   not auto-update to.
 - A little easter egg in the tunnel list.
-
-### Fixed
-- Wi-Fi SSID rules now keep working while monitoring in the background: the
-  network callback opts into location info (Android 12+ redacts the SSID
-  otherwise) and the monitor service assumes the `location` foreground type —
-  only while location permission is actually granted.
 
 ### Changed
 - Importing a configuration (QR or file) that exactly matches a stored tunnel
