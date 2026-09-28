@@ -13,6 +13,7 @@ Copyright (C) 2026 Tobias Mueller and KabelWacht contributors
     android:padding="12dp">
 
     <ImageView
+        android:id="@+id/widget_icon"
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:layout_marginEnd="10dp"

@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class TunnelRepository(
     private val store: ConfigStore,
     private val conditionsStore: ConditionsStore? = null,
+    private val widgetBindings: WidgetBindingStore? = null,
 ) {
 
     private val _profiles = MutableStateFlow<List<TunnelProfile>>(emptyList())
@@ -60,6 +61,7 @@ class TunnelRepository(
         if (oldName != newName) {
             store.rename(oldName, newName)
             conditionsStore?.rename(oldName, newName)
+            widgetBindings?.rename(oldName, newName)
         }
         store.save(newName, config)
         refresh()

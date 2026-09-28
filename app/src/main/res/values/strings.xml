@@ -78,6 +78,12 @@
     <string name="widget_tap_to_connect">Tap to connect</string>
     <string name="toggle_connecting">Connecting "%1$s"…</string>
     <string name="toggle_disconnecting">Disconnecting "%1$s"…</string>
+    <string name="widget_config_title">Choose a tunnel</string>
+    <string name="widget_config_automatic">Automatic</string>
+    <string name="widget_config_automatic_desc">Whichever tunnel is connected, or the one you used last</string>
+    <string name="widget_config_no_tunnels">Create a tunnel first, then add the widget.</string>
+    <string name="widget_config_open_app">Open KabelWacht</string>
+    <string name="widget_tunnel_missing">Tunnel is gone — tap to choose another</string>
     <string name="toggle_unknown_tunnel">Tunnel "%1$s" no longer exists.</string>
 
     <!-- Export -->

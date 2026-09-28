@@ -8,4 +8,5 @@ Copyright (C) 2026 Tobias Mueller and KabelWacht contributors
     <color name="widget_text">#E8EAE8</color>
     <color name="widget_text_secondary">#A5AAA6</color>
     <color name="widget_accent">#93D5AC</color>
+    <color name="widget_background_active">#24382C</color>
 </resources>

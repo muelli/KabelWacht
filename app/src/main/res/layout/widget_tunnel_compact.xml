@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2026 Tobias Mueller and KabelWacht contributors
+
+Smallest size: the bolt alone. The name and status views exist but stay
+hidden so the provider can address the same ids in every layout variant.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <ImageView
+        android:id="@+id/widget_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="@string/widget_label"
+        android:src="@drawable/ic_quick_tunnel" />
+
+    <TextView
+        android:id="@+id/widget_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/widget_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+</LinearLayout>
