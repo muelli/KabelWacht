@@ -81,6 +81,19 @@
                 android:value="true" />
         </service>
 
+        <!-- Widget configuration: asks which tunnel this widget toggles. Exported
+             because the launcher starts it when the widget is placed or
+             reconfigured; it only writes an app-private widget-to-tunnel binding. -->
+        <activity
+            android:name=".widget.TunnelWidgetConfigActivity"
+            android:exported="true"
+            android:label="@string/widget_config_title"
+            android:theme="@style/Theme.KabelWacht">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <receiver
             android:name=".widget.TunnelWidgetProvider"
             android:exported="false"

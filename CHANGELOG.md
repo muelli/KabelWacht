@@ -4,6 +4,22 @@ All notable changes to KabelWacht are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Per-release notes shown
 in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
+## [Unreleased]
+
+### Added
+- Each home-screen widget can be bound to a **specific tunnel**: the launcher
+  asks when the widget is placed, and Android 12+ can reconfigure it later.
+  "Automatic" keeps the previous behaviour (follow the connected tunnel, else
+  the one used last), so existing widgets are unaffected.
+- The widget **resizes in both directions** and adapts: just the icon when
+  small, name and state in a row at the default size, and a larger stacked
+  layout when tall. A connected tunnel tints the widget background.
+
+### Fixed
+- Renaming a tunnel follows through to the widgets bound to it instead of
+  orphaning them; a widget whose tunnel was deleted says so and offers to
+  pick another instead of quietly toggling a different one.
+
 ## [117] — versionCode 117
 
 ### Fixed
