@@ -6,6 +6,16 @@ on:
     branches: ['main', 'master']
   workflow_dispatch:
 
+# This job is a read-modify-write on the fdroid-repo branch: it clones the
+# branch, carries the previous APKs forward, rebuilds the index and
+# force-pushes. Two overlapping runs therefore do not merely race for the ref
+# lock (one push is rejected) — the winner silently drops whatever the loser
+# published. Serialise them, and never cancel one midway, so each run starts
+# from the finished state of the one before it.
+concurrency:
+  group: publish-fdroid
+  cancel-in-progress: false
+
 # Push the generated repo to the fdroid-repo branch and (best-effort) enable Pages.
 permissions:
   contents: write
@@ -36,6 +46,12 @@ jobs:
           if [ -z "$APP_SIGNING_SEED" ] || [ -z "$FDROID_SIGNING_SEED" ]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "::warning::Skipping F-Droid publish: set the APP_SIGNING_SEED and FDROID_SIGNING_SEED secrets (one high-entropy string each; see README 'Signing')."
+          elif [ "${{ github.ref_type }}" != "tag" ] && git describe --tags --exact-match HEAD >/dev/null 2>&1; then
+            # Releasing pushes the commit and its tag seconds apart. Both events
+            # build the same, now-tagged commit, so publishing here as well would
+            # add a second entry with the same versionCode.
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping F-Droid publish: this commit is tagged, so the tag's run publishes it."
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
@@ -306,7 +322,15 @@ jobs:
           git -c user.name='github-actions[bot]' \
               -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
               commit -m "Publish KabelWacht versionCode $CODE" || { echo "nothing to commit"; exit 0; }
-          git push --force "$REMOTE" HEAD:fdroid-repo
+          # Serialised runs should not collide, but a ref lock can still be
+          # briefly held; retry rather than fail a whole publish for it.
+          for attempt in 1 2 3; do
+            git push --force "$REMOTE" HEAD:fdroid-repo && exit 0
+            echo "::warning::push to fdroid-repo rejected (attempt $attempt); retrying"
+            sleep $((attempt * 5))
+          done
+          echo "::error::could not update fdroid-repo after 3 attempts"
+          exit 1
 
       # Binary transparency: log the published APK and the signed repo index
       # (entry.jar) in the public Sigstore transparency log. Attesting the index
