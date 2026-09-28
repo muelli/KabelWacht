@@ -11,4 +11,5 @@ Compose theming. Values mirror the app palette; night variants in values-night.
     <color name="widget_text">#1A1A1A</color>
     <color name="widget_text_secondary">#555555</color>
     <color name="widget_accent">#2E6C4D</color>
+    <color name="widget_background_active">#D6E8DC</color>
 </resources>

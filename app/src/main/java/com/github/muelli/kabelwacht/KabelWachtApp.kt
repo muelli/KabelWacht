@@ -10,6 +10,7 @@ import com.github.muelli.kabelwacht.data.ConditionsStore
 import com.github.muelli.kabelwacht.data.ConfigStore
 import com.github.muelli.kabelwacht.data.SettingsStore
 import com.github.muelli.kabelwacht.data.TunnelRepository
+import com.github.muelli.kabelwacht.data.WidgetBindingStore
 import com.github.muelli.kabelwacht.vpn.TunnelManager
 import com.github.muelli.kabelwacht.vpn.automation.AutomationEngine
 import com.github.muelli.kabelwacht.vpn.automation.ConditionMonitorService
@@ -46,7 +47,8 @@ class AppContainer(context: Context) {
     private val appContext = context.applicationContext
     val settings: SettingsStore = SettingsStore(context)
     val conditionsStore: ConditionsStore = ConditionsStore(context)
-    val repository: TunnelRepository = TunnelRepository(ConfigStore(context), conditionsStore)
+    val widgetBindings: WidgetBindingStore = WidgetBindingStore(context)
+    val repository: TunnelRepository = TunnelRepository(ConfigStore(context), conditionsStore, widgetBindings)
     val tunnelManager: TunnelManager = TunnelManager(context, settings)
     val networkMonitor: NetworkStateMonitor = NetworkStateMonitor(context)
     val automationEngine: AutomationEngine = AutomationEngine(
@@ -101,6 +103,7 @@ class AppContainer(context: Context) {
                     targetName = active
                         ?: remembered?.takeIf { r -> profiles.any { it.name == r } }
                         ?: profiles.firstOrNull()?.name,
+                    knownNames = profiles.mapTo(mutableSetOf()) { it.name },
                 )
             }.collect { state ->
                 latestWidgetState = state
@@ -119,6 +122,7 @@ class AppContainer(context: Context) {
             activeName = tunnelManager.activeTunnel.value,
             targetName = tunnelManager.activeTunnel.value
                 ?: repository.profiles.value.firstOrNull()?.name,
+            knownNames = repository.profiles.value.mapTo(mutableSetOf()) { it.name },
         )
 
     /** Re-render the widget(s) from the latest known state (e.g. one was just added). */
