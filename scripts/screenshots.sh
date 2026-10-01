@@ -34,10 +34,15 @@ KEEP_RUNNING=0
 # this AVD emulates is 9:20. --size overrides the display for the capture and
 # is reset afterwards, so one AVD serves both stores.
 SIZE=""
+# Size alone makes a big phone, not a tablet: Android picks layouts by density
+# -independent width, so the density has to come down with the resolution up
+# for the app to render its large-screen layout.
+DENSITY=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --out) OUT_DIR="$2"; shift 2 ;;
     --size) SIZE="$2"; shift 2 ;;
+    --density) DENSITY="$2"; shift 2 ;;
     --keep-running) KEEP_RUNNING=1; shift ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
@@ -79,6 +84,7 @@ RESIZED=0
 cleanup() {
   if [ "$RESIZED" = 1 ]; then
     "$ADB" shell wm size reset >/dev/null 2>&1 || true
+    "$ADB" shell wm density reset >/dev/null 2>&1 || true
   fi
   if [ "$STARTED_EMULATOR" = 1 ] && [ "$KEEP_RUNNING" = 0 ]; then
     "$ADB" emu kill >/dev/null 2>&1 || true
@@ -102,11 +108,12 @@ if ! "$ADB" get-state >/dev/null 2>&1; then
 fi
 say "Device ready: Android $("$ADB" shell getprop ro.build.version.release | tr -d '\r')"
 
-if [ -n "$SIZE" ]; then
-  say "Setting display to $SIZE for this capture"
-  "$ADB" shell wm size "$SIZE" >/dev/null
+if [ -n "$SIZE" ] || [ -n "$DENSITY" ]; then
+  say "Setting display to ${SIZE:-unchanged} @ ${DENSITY:-default} dpi for this capture"
+  [ -n "$SIZE" ] && "$ADB" shell wm size "$SIZE" >/dev/null
+  [ -n "$DENSITY" ] && "$ADB" shell wm density "$DENSITY" >/dev/null
   RESIZED=1
-  sleep 3
+  sleep 4
 fi
 
 say "Installing the app"
@@ -241,7 +248,14 @@ shot "$OUT_DIR/2.png"
 # shellcheck disable=SC2046
 "$ADB" shell input tap $(scroll_to_element text "Raw configuration")
 sleep 1
-"$ADB" shell input swipe 540 1700 540 900 300   # bring the expanded field into view
+# Scroll the expanded field into view. The distances come from the current
+# display rather than being hardcoded for a 1080x2400 phone, so this also
+# works on the tablet and desktop geometries (--size/--density).
+SCREEN="$("$ADB" shell wm size | tail -1 | tr -d '\r' | awk '{print $NF}')"
+SCREEN_W="${SCREEN%x*}"; SCREEN_H="${SCREEN#*x}"
+"$ADB" shell input swipe \
+  $((SCREEN_W / 2)) $((SCREEN_H * 70 / 100)) \
+  $((SCREEN_W / 2)) $((SCREEN_H * 35 / 100)) 300
 sleep 1
 shot "$OUT_DIR/3.png"
 
