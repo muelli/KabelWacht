@@ -18,6 +18,8 @@ Features:
 * Always-on VPN support, including reconnecting after a reboot.
 * A structured editor with Interface and Peer sections, with the complete
   wg-quick file one tap away.
+* Fully usable with a hardware keyboard — shortcuts for search, new
+  tunnel and save, and every control reachable by Tab and arrow keys.
 * Userspace WireGuard backend — no root required.
 
 Privacy and freedom:
