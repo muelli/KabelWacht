@@ -30,9 +30,19 @@ SYSTEM_IMAGE="system-images;android-35;default;x86_64"
 APP_ID="com.github.muelli.kabelwacht"
 OUT_DIR="fastlane/metadata/android/en-US/images/phoneScreenshots"
 KEEP_RUNNING=0
+# Google Play only accepts 16:9 or 9:16 phone screenshots, while the Pixel 6
+# this AVD emulates is 9:20. --size overrides the display for the capture and
+# is reset afterwards, so one AVD serves both stores.
+SIZE=""
+# Size alone makes a big phone, not a tablet: Android picks layouts by density
+# -independent width, so the density has to come down with the resolution up
+# for the app to render its large-screen layout.
+DENSITY=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --out) OUT_DIR="$2"; shift 2 ;;
+    --size) SIZE="$2"; shift 2 ;;
+    --density) DENSITY="$2"; shift 2 ;;
     --keep-running) KEEP_RUNNING=1; shift ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
@@ -70,7 +80,12 @@ if ! "$EMULATOR" -list-avds 2>/dev/null | grep -qx "$AVD_NAME"; then
 fi
 
 STARTED_EMULATOR=0
+RESIZED=0
 cleanup() {
+  if [ "$RESIZED" = 1 ]; then
+    "$ADB" shell wm size reset >/dev/null 2>&1 || true
+    "$ADB" shell wm density reset >/dev/null 2>&1 || true
+  fi
   if [ "$STARTED_EMULATOR" = 1 ] && [ "$KEEP_RUNNING" = 0 ]; then
     "$ADB" emu kill >/dev/null 2>&1 || true
   fi
@@ -93,6 +108,14 @@ if ! "$ADB" get-state >/dev/null 2>&1; then
 fi
 say "Device ready: Android $("$ADB" shell getprop ro.build.version.release | tr -d '\r')"
 
+if [ -n "$SIZE" ] || [ -n "$DENSITY" ]; then
+  say "Setting display to ${SIZE:-unchanged} @ ${DENSITY:-default} dpi for this capture"
+  [ -n "$SIZE" ] && "$ADB" shell wm size "$SIZE" >/dev/null
+  [ -n "$DENSITY" ] && "$ADB" shell wm density "$DENSITY" >/dev/null
+  RESIZED=1
+  sleep 4
+fi
+
 say "Installing the app"
 "$ADB" install -r app/build/outputs/apk/debug/app-debug.apk >/dev/null
 
@@ -108,6 +131,35 @@ DNS = 9.9.9.9
 PublicKey = xTIBA5rboUvnH4htodjb6e697QjLERt1NAB4mZqp8Dg=
 Endpoint = vpn.example.org:51820
 AllowedIPs = 0.0.0.0/0, ::/0
+PersistentKeepalive = 25
+EOF
+
+# A list with a single entry photographs badly — a store listing wants to show
+# what the app looks like in use. Two more tunnels, with different endpoints so
+# the subtitles differ.
+"$ADB" shell "run-as $APP_ID sh -c 'cat > files/tunnels/home-nas.conf'" <<'EOF'
+[Interface]
+PrivateKey = cEnhRaCBfU6B1ZqEknpQJZkQ1UTBl1lJbnVHmBTQS0o=
+Address = 10.8.0.3/32
+DNS = 10.8.0.1
+
+[Peer]
+PublicKey = TrMvSoP4jYQlY6RIzBgbssQqY3vxI2Pi+y71lOWWXX0=
+Endpoint = nas.example.net:51820
+AllowedIPs = 10.8.0.0/24
+PersistentKeepalive = 25
+EOF
+
+"$ADB" shell "run-as $APP_ID sh -c 'cat > files/tunnels/office.conf'" <<'EOF'
+[Interface]
+PrivateKey = SKLPBRhEjCCBPTTJZ9DLHGrMqHGMnXjWHjJeUFjfQ1Y=
+Address = 10.9.0.7/32
+DNS = 10.9.0.1
+
+[Peer]
+PublicKey = GtL7fZc9vbFqTVDXaUHhiMtbVjUGMIQJvTHBPgCNMVo=
+Endpoint = gw.office.example.com:51820
+AllowedIPs = 10.9.0.0/16
 PersistentKeepalive = 25
 EOF
 
@@ -196,7 +248,14 @@ shot "$OUT_DIR/2.png"
 # shellcheck disable=SC2046
 "$ADB" shell input tap $(scroll_to_element text "Raw configuration")
 sleep 1
-"$ADB" shell input swipe 540 1700 540 900 300   # bring the expanded field into view
+# Scroll the expanded field into view. The distances come from the current
+# display rather than being hardcoded for a 1080x2400 phone, so this also
+# works on the tablet and desktop geometries (--size/--density).
+SCREEN="$("$ADB" shell wm size | tail -1 | tr -d '\r' | awk '{print $NF}')"
+SCREEN_W="${SCREEN%x*}"; SCREEN_H="${SCREEN#*x}"
+"$ADB" shell input swipe \
+  $((SCREEN_W / 2)) $((SCREEN_H * 70 / 100)) \
+  $((SCREEN_W / 2)) $((SCREEN_H * 35 / 100)) 300
 sleep 1
 shot "$OUT_DIR/3.png"
 
