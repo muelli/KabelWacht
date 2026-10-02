@@ -44,6 +44,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -74,6 +80,15 @@ fun EditTunnelScreen(
     }
 
     Scaffold(
+        // Hardware keyboard: Ctrl+S saves, like the check action.
+        modifier = Modifier.onPreviewKeyEvent { event ->
+            if (event.type == KeyEventType.KeyDown && event.isCtrlPressed && event.key == Key.S) {
+                if (viewModel.save()) onDone()
+                true
+            } else {
+                false
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text(title) },
