@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 Tobias Mueller and KabelWacht contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Branches almost always add entries to the same place in the changelog — the
+# top of the unreleased section — so every parallel pull request conflicts
+# there, over text where both sides are simply wanted. Git's built-in "union"
+# driver resolves such a conflict by keeping both sides' lines instead of
+# writing conflict markers.
+#
+# It is deliberately scoped to this one file: union merging prose would happily
+# produce duplicated sentences. Entries can still land in an odd order or
+# under a heading that was added on one side only, so read the result of a
+# merge that touched the changelog before pushing it.
+CHANGELOG.md merge=union
