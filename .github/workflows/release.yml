@@ -76,6 +76,12 @@ jobs:
       - name: Assemble release APK
         run: ./gradlew assembleRelease --stacktrace
 
+      # Google Play accepts only app bundles for new apps. It is built from the
+      # same sources as the APK; Play derives per-device APKs from it, so the
+      # bundle itself is never installed directly.
+      - name: Assemble release bundle (AAB)
+        run: ./gradlew bundleRelease --stacktrace
+
       # Optional signing: only runs when the signing seed is configured.
       # F-Droid rebuilds and signs from source, so an unsigned APK is still a valid
       # release artifact for that channel.
@@ -103,10 +109,28 @@ jobs:
           # Keep only the signed APK as the release artifact.
           rm -f "$UNSIGNED" "$ALIGNED"
 
+          # The bundle is signed with the same identity, but by jarsigner:
+          # apksigner only speaks APK. Play verifies this signature when the
+          # bundle is uploaded (it is the "upload key"), then re-signs the APKs
+          # it delivers with the app signing key it holds.
+          AAB_DIR="app/build/outputs/bundle/release"
+          AAB="$AAB_DIR/kabelwacht-${{ steps.version.outputs.code }}.aab"
+          mv "$AAB_DIR/app-release.aab" "$AAB"
+          jarsigner -keystore "$RUNNER_TEMP/app.p12" \
+            -storepass:env APP_PASS \
+            -sigalg SHA256withECDSA -digestalg SHA-256 \
+            "$AAB" app
+          jarsigner -verify "$AAB" >/dev/null && echo "bundle signature verifies"
+
       - name: Generate checksums
         run: |
           cd app/build/outputs/apk/release
           sha256sum *.apk > SHA256SUMS
+          # The bundle lives in a sibling directory; record it under a plain name.
+          for f in ../../bundle/release/*.aab; do
+            [ -e "$f" ] || continue
+            (cd ../../bundle/release && sha256sum "$(basename "$f")")
+          done >> SHA256SUMS
           cat SHA256SUMS
 
       # Binary transparency: record each artifact's digest, bound to this exact
@@ -117,6 +141,7 @@ jobs:
         with:
           subject-path: |
             app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
             app/build/outputs/apk/release/SHA256SUMS
 
       - name: Create GitHub Release
@@ -126,4 +151,5 @@ jobs:
           generate_release_notes: ${{ steps.version.outputs.changelog == '' }}
           files: |
             app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
             app/build/outputs/apk/release/SHA256SUMS
