@@ -1,0 +1,5 @@
+Signing keys rotated to a new, simpler scheme (seed-derived EC P-256).
+
+IMPORTANT one-time step: uninstall the previous KabelWacht and remove the
+old repository entry in F-Droid, then re-add the repository (new
+fingerprint) and reinstall. No functional changes to the app.
