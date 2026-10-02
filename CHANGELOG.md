@@ -4,6 +4,15 @@ All notable changes to KabelWacht are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Per-release notes shown
 in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
+## [Unreleased]
+
+### Fixed
+- The app bundle is signed with an RSA key, which is the only kind Google
+  Play accepts; it rejected the previous EC-signed bundle as having an
+  invalid signature. The key is derived from the existing seed like the
+  others, and is only Play's upload key — nothing about the APKs this
+  project distributes changes.
+
 ## [112] — versionCode 112
 
 ### Added

@@ -109,18 +109,26 @@ jobs:
           # Keep only the signed APK as the release artifact.
           rm -f "$UNSIGNED" "$ALIGNED"
 
-          # The bundle is signed with the same identity, but by jarsigner:
-          # apksigner only speaks APK. Play verifies this signature when the
-          # bundle is uploaded (it is the "upload key"), then re-signs the APKs
-          # it delivers with the app signing key it holds.
+          # The bundle is signed by jarsigner (apksigner only speaks APK) and
+          # with the separate "play" identity, because Google Play accepts only
+          # RSA keys — the EC key above is rejected as an invalid signature.
+          # This is merely Play's upload key: Play re-signs the APKs it delivers
+          # with a key it holds, so it never reaches a device.
           AAB_DIR="app/build/outputs/bundle/release"
           AAB="$AAB_DIR/kabelwacht-${{ steps.version.outputs.code }}.aab"
           mv "$AAB_DIR/app-release.aab" "$AAB"
-          jarsigner -keystore "$RUNNER_TEMP/app.p12" \
-            -storepass:env APP_PASS \
-            -sigalg SHA256withECDSA -digestalg SHA-256 \
-            "$AAB" app
-          jarsigner -verify "$AAB" >/dev/null && echo "bundle signature verifies"
+          if [ -f signing/play-cert.pem ]; then
+            PLAY_PASS="$(SEED="$APP_SIGNING_SEED" scripts/derive-signing-key.py play "$RUNNER_TEMP/play.p12")"
+            echo "::add-mask::$PLAY_PASS"
+            export PLAY_PASS
+            jarsigner -keystore "$RUNNER_TEMP/play.p12" \
+              -storepass:env PLAY_PASS \
+              -sigalg SHA256withRSA -digestalg SHA-256 \
+              "$AAB" play
+            jarsigner -verify "$AAB" >/dev/null && echo "bundle signed with the Play upload key"
+          else
+            echo "::warning::signing/play-cert.pem is missing — run the bootstrap-signing workflow; the bundle stays unsigned and Play will reject it."
+          fi
 
       - name: Generate checksums
         run: |
