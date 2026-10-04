@@ -4,7 +4,7 @@ All notable changes to KabelWacht are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Per-release notes shown
 in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
-## [Unreleased]
+## [117] — versionCode 117
 
 ### Fixed
 - The app bundle is signed with an RSA key, which is the only kind Google
