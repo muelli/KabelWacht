@@ -17,6 +17,7 @@ import com.github.muelli.kabelwacht.data.ConfigStore
 import com.github.muelli.kabelwacht.data.SettingsStore
 import com.github.muelli.kabelwacht.data.TunnelRepository
 import com.github.muelli.kabelwacht.data.WidgetBindingStore
+import com.github.muelli.kabelwacht.vpn.Backends
 import com.github.muelli.kabelwacht.vpn.TunnelManager
 import com.github.muelli.kabelwacht.vpn.retryOnConnectivity
 import com.github.muelli.kabelwacht.vpn.automation.AutomationEngine
@@ -59,7 +60,7 @@ class AppContainer(context: Context) {
     val conditionsStore: ConditionsStore = ConditionsStore(context)
     val widgetBindings: WidgetBindingStore = WidgetBindingStore(context)
     val repository: TunnelRepository = TunnelRepository(ConfigStore(context), conditionsStore, widgetBindings)
-    val tunnelManager: TunnelManager = TunnelManager(context, settings)
+    val tunnelManager: TunnelManager = TunnelManager(context, settings, Backends.create(context))
     val networkMonitor: NetworkStateMonitor = NetworkStateMonitor(context)
     val automationEngine: AutomationEngine = AutomationEngine(
         conditionsStore = conditionsStore,
