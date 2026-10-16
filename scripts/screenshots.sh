@@ -16,6 +16,8 @@
 #   scripts/screenshots.sh                 # shoot into the fastlane directory
 #   scripts/screenshots.sh --out DIR       # shoot somewhere else (e.g. a preview)
 #   scripts/screenshots.sh --keep-running  # leave the emulator up afterwards
+#   scripts/screenshots.sh --connected     # show a tunnel connected (demo mode, debug build)
+#   scripts/screenshots.sh --video demo.mp4  # record a scripted demo instead
 #
 # Requirements: ANDROID_HOME (or ~/Android/Sdk) with platform-tools, a current
 # emulator, and the "system-images;android-35;default;x86_64" image; JDK 17 on
@@ -38,12 +40,20 @@ SIZE=""
 # -independent width, so the density has to come down with the resolution up
 # for the app to render its large-screen layout.
 DENSITY=""
+# --connected switches on demo mode (debug builds only: a fake backend behind a
+# real but empty VPN interface, see app/src/debug) and shows a tunnel connected.
+CONNECTED=0
+# --video FILE records a short scripted demo (implies --connected) instead of
+# taking screenshots: connect, look at the notification, switch tunnels.
+VIDEO=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --out) OUT_DIR="$2"; shift 2 ;;
     --size) SIZE="$2"; shift 2 ;;
     --density) DENSITY="$2"; shift 2 ;;
     --keep-running) KEEP_RUNNING=1; shift ;;
+    --connected) CONNECTED=1; shift ;;
+    --video) VIDEO="$2"; CONNECTED=1; shift 2 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -163,14 +173,28 @@ AllowedIPs = 10.9.0.0/16
 PersistentKeepalive = 25
 EOF
 
-say "Setting demo-mode status bar"
+# Demo mode is read when the app starts; data survives reinstalls, so clear
+# the marker explicitly when it is not wanted.
+if [ "$CONNECTED" = 1 ]; then
+  "$ADB" shell "run-as $APP_ID touch files/demo-mode"
+else
+  "$ADB" shell "run-as $APP_ID rm -f files/demo-mode"
+fi
+
 "$ADB" shell settings put global sysui_demo_allowed 1
 demo() { "$ADB" shell am broadcast -a com.android.systemui.demo "$@" >/dev/null; }
-demo -e command enter
-demo -e command clock -e hhmm 1000
-demo -e command battery -e level 100 -e plugged false
-demo -e command network -e wifi show -e level 4
-demo -e command notifications -e visible false
+# SystemUI's demo status bar replaces every icon and cannot show the VPN key,
+# so a connected capture keeps the real status bar (and the real clock).
+if [ "$CONNECTED" = 1 ]; then
+  demo -e command exit
+else
+  say "Setting demo-mode status bar"
+  demo -e command enter
+  demo -e command clock -e hhmm 1000
+  demo -e command battery -e level 100 -e plugged false
+  demo -e command network -e wifi show -e level 4
+  demo -e command notifications -e visible false
+fi
 
 # Center coordinates ("x y") of the first UI element whose dump attribute
 # matches, or empty if none. Dismisses a "System UI isn't responding" ANR if it
@@ -209,6 +233,45 @@ tap_element() { # tap_element <attr> <value>
   "$ADB" shell input tap $(wait_for_element "$1" "$2")
 }
 
+# Center ("x y") of the switch on the same row as the tunnel named $1.
+switch_coords() { # switch_coords <tunnel-name>
+  "$ADB" shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || return 0
+  "$ADB" shell cat /sdcard/ui.xml | NAME="$1" python3 -c "
+import os, re, sys
+xml = sys.stdin.read()
+box = r'bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"'
+row = re.search('text=\"' + re.escape(os.environ['NAME']) + '\"[^>]*' + box, xml)
+if row:
+    y = (int(row.group(2)) + int(row.group(4))) // 2
+    switches = [tuple(map(int, m.groups())) for m in re.finditer('checkable=\"true\"[^>]*' + box, xml)]
+    if switches:
+        x1, y1, x2, y2 = min(switches, key=lambda b: abs((b[1] + b[3]) // 2 - y))
+        print((x1 + x2) // 2, (y1 + y2) // 2)
+"
+}
+
+# With --connected: switch the tunnel on, accepting Android's one-time VPN
+# consent dialog, and give the demo backend a moment to report traffic.
+connect() { # connect <tunnel-name>
+  [ "$CONNECTED" = 1 ] || return 0
+  # shellcheck disable=SC2046 — coords is 'x y'
+  "$ADB" shell input tap $(switch_coords "$1")
+  sleep 2
+  local ok
+  ok="$(element_coords text "OK")"
+  if [ -n "$ok" ]; then
+    # shellcheck disable=SC2086
+    "$ADB" shell input tap $ok
+    sleep 1
+    # The first attempt was spent on the consent; switch on again.
+    if [ -z "$(element_coords checked true)" ]; then
+      # shellcheck disable=SC2046
+      "$ADB" shell input tap $(switch_coords "$1")
+    fi
+  fi
+  sleep 3
+}
+
 shot() { "$ADB" exec-out screencap -p > "$1"; say "captured $1"; }
 
 # Swipe up until an element scrolls into view, then echo its center ("x y").
@@ -231,11 +294,43 @@ launch() { # launch (cold) into the tunnel list
   sleep 1
 }
 
+if [ -n "$VIDEO" ]; then
+  say "Recording demo video"
+  "$ADB" shell rm -f /sdcard/demo.mp4
+  "$ADB" shell screenrecord --time-limit 120 /sdcard/demo.mp4 &
+  RECORDER=$!
+  sleep 2
+  launch
+  sleep 2
+  connect "vpn.example"
+  sleep 3
+  "$ADB" shell cmd statusbar expand-notifications
+  sleep 4
+  "$ADB" shell cmd statusbar collapse
+  sleep 2
+  # Switching to another tunnel takes the first one down.
+  # shellcheck disable=SC2046
+  "$ADB" shell input tap $(switch_coords "office")
+  sleep 5
+  # shellcheck disable=SC2046
+  "$ADB" shell input tap $(switch_coords "office")
+  sleep 3
+  # screenrecord finalises the file on SIGINT.
+  "$ADB" shell pkill -INT screenrecord || true
+  wait "$RECORDER" 2>/dev/null || true
+  sleep 2
+  "$ADB" pull /sdcard/demo.mp4 "$VIDEO" >/dev/null
+  demo -e command exit
+  say "Recorded $VIDEO"
+  exit 0
+fi
+
 mkdir -p "$OUT_DIR"
 say "Capturing screenshots"
 
 # 1. Tunnel list (light).
 launch
+connect "vpn.example"
 shot "$OUT_DIR/1.png"
 
 # 2. Structured editor.
@@ -271,6 +366,7 @@ say "Switching to dark theme"
 "$ADB" shell cmd uimode night yes >/dev/null 2>&1 || true
 sleep 2
 launch
+connect "office"
 shot "$OUT_DIR/5.png"
 "$ADB" shell cmd uimode night no >/dev/null 2>&1 || true
 
