@@ -115,6 +115,11 @@
                 android:value="Monitors network changes to connect or disconnect WireGuard tunnels automatically according to user run conditions" />
         </service>
 
+        <!-- The status notification's Disconnect action (own PendingIntent only). -->
+        <receiver
+            android:name=".notification.NotificationActionReceiver"
+            android:exported="false" />
+
         <receiver
             android:name=".vpn.automation.BootReceiver"
             android:exported="false">

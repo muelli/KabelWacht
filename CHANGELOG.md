@@ -14,8 +14,19 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 - The widget **resizes in both directions** and adapts: just the icon when
   small, name and state in a row at the default size, and a larger stacked
   layout when tall. A connected tunnel tints the widget background.
+- While a tunnel is connected, a **status notification** puts the app's icon in
+  the status bar and shows the live traffic and the last handshake, with a
+  Disconnect action. The lock screen only shows "VPN connected".
+- **Traffic statistics**: the connected tunnel's row shows bytes received and
+  sent, and how long ago the last handshake was — or that there was none yet,
+  the tell-tale of a wrong key or an unreachable endpoint.
+- **Alerts** when a tunnel could not connect without anyone watching: run
+  conditions that failed to connect (or lack VPN permission), always-on VPN
+  failing, or the tunnel being stopped by the system or another VPN app.
 
 ### Fixed
+- Notification permission is now requested (on the first connect, Android 13+);
+  until now no notification of the app could show there.
 - Renaming a tunnel follows through to the widgets bound to it instead of
   orphaning them; a widget whose tunnel was deleted says so and offers to
   pick another instead of quietly toggling a different one.

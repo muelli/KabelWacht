@@ -7,6 +7,7 @@ import com.github.muelli.kabelwacht.data.ConditionsStore
 import com.github.muelli.kabelwacht.data.NetworkStateSnapshot
 import com.github.muelli.kabelwacht.data.TunnelRepository
 import com.github.muelli.kabelwacht.vpn.TunnelManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,12 +23,17 @@ import kotlinx.coroutines.launch
 /**
  * Coordinates automated tunnel activation and deactivation based on physical network transitions
  * and user-configured [TunnelRunConditions].
+ *
+ * [onAutoConnectFailed] reports a tunnel the rules wanted up but that could not be
+ * connected, with the cause — or null when VPN consent is missing — since nobody
+ * is watching the screen to notice.
  */
 class AutomationEngine(
     private val conditionsStore: ConditionsStore,
     private val repository: TunnelRepository,
     private val tunnelManager: TunnelManager,
     val networkMonitor: NetworkStateMonitor,
+    private val onAutoConnectFailed: (tunnelName: String, cause: Throwable?) -> Unit = { _, _ -> },
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
     /** True if any configured tunnel currently has run conditions enabled. */
@@ -98,8 +104,15 @@ class AutomationEngine(
             is AutomationAction.Start -> {
                 val profile = repository.get(action.name) ?: return
                 // Without VPN permission nothing can be started automatically.
-                if (!tunnelManager.hasConsent()) return
+                if (!tunnelManager.hasConsent()) {
+                    onAutoConnectFailed(profile.name, null)
+                    return
+                }
                 runCatching { tunnelManager.setTunnelState(profile, up = true) }
+                    .onFailure {
+                        // A newer network change superseding this evaluation is no failure.
+                        if (it !is CancellationException) onAutoConnectFailed(profile.name, it)
+                    }
             }
             AutomationAction.StopActive -> runCatching { tunnelManager.bringDownActive() }
         }
