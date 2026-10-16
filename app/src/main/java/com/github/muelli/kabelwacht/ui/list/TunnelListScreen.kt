@@ -7,6 +7,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.SystemClock
 import android.provider.Settings
 import android.widget.Toast
@@ -58,6 +59,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,16 +80,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.muelli.kabelwacht.R
 import com.github.muelli.kabelwacht.appContainer
 import com.github.muelli.kabelwacht.data.TunnelProfile
 import com.github.muelli.kabelwacht.data.TunnelSearch
+import com.github.muelli.kabelwacht.notification.TunnelNotifier
 import com.github.muelli.kabelwacht.ui.AppViewModelProvider
 import com.github.muelli.kabelwacht.ui.UiMessage
 import com.github.muelli.kabelwacht.ui.theme.MaxContentWidth
 import com.github.muelli.kabelwacht.util.confirmDeviceCredential
+import com.github.muelli.kabelwacht.vpn.TunnelStatistics
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 
@@ -107,7 +113,11 @@ fun TunnelListScreen(
     val activeTunnel by viewModel.activeTunnel.collectAsStateWithLifecycle()
     val alwaysOnTunnel by viewModel.alwaysOnTunnel.collectAsStateWithLifecycle(initialValue = null)
     val conditions by viewModel.conditions.collectAsStateWithLifecycle()
+    val statistics by viewModel.statistics.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
+
+    // Profiles may change on disk (adb push, backup restore): re-read them on resume.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onResume() }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -154,11 +164,12 @@ fun TunnelListScreen(
     }
 
     // --- VPN consent, then activate ---
-    var pendingToggleOn by remember { mutableStateOf<TunnelProfile?>(null) }
+    // Only the name is kept, so it survives activity recreation.
+    var pendingToggleOn by rememberSaveable { mutableStateOf<String?>(null) }
     val consentLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) { result ->
-        val profile = pendingToggleOn
+        val profile = pendingToggleOn?.let(viewModel::profile)
         pendingToggleOn = null
         if (result.resultCode == Activity.RESULT_OK && profile != null) {
             viewModel.setActive(profile, up = true)
@@ -166,17 +177,40 @@ fun TunnelListScreen(
             viewModel.showMessage(UiMessage(R.string.vpn_permission_required))
         }
     }
+    fun connect(profile: TunnelProfile) {
+        val intent = viewModel.consentIntent()
+        if (intent == null) {
+            viewModel.setActive(profile, up = true)
+        } else {
+            pendingToggleOn = profile.name
+            consentLauncher.launch(intent)
+        }
+    }
+
+    // --- Notification permission (Android 13+), asked on the first connect: the
+    // status notification is what shows the VPN in the status bar. Either answer
+    // goes on to connect; once permanently denied, the system answers at once.
+    var pendingNotifyThenConnect by rememberSaveable { mutableStateOf<String?>(null) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) {
+        pendingNotifyThenConnect?.let(viewModel::profile)?.let(::connect)
+        pendingNotifyThenConnect = null
+    }
+
     fun toggle(profile: TunnelProfile, up: Boolean) {
         if (!up) {
             viewModel.setActive(profile, up = false)
             return
         }
-        val intent = viewModel.consentIntent()
-        if (intent == null) {
-            viewModel.setActive(profile, up = true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            pendingNotifyThenConnect = profile.name
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            pendingToggleOn = profile
-            consentLauncher.launch(intent)
+            connect(profile)
         }
     }
 
@@ -389,6 +423,7 @@ fun TunnelListScreen(
                         TunnelRow(
                             profile = profile,
                             isActive = activeTunnel == profile.name,
+                            statistics = statistics?.takeIf { it.tunnelName == profile.name },
                             isAlwaysOn = alwaysOnTunnel == profile.name,
                             hasConditions = conditions[profile.name]?.enabled == true,
                             onToggle = { up -> toggle(profile, up) },
@@ -510,6 +545,7 @@ private fun EmptyState(padding: PaddingValues) {
 private fun TunnelRow(
     profile: TunnelProfile,
     isActive: Boolean,
+    statistics: TunnelStatistics?,
     isAlwaysOn: Boolean,
     hasConditions: Boolean,
     onToggle: (Boolean) -> Unit,
@@ -541,11 +577,22 @@ private fun TunnelRow(
                 if (isAlwaysOn) add(stringResource(R.string.always_on_label))
                 if (hasConditions) add(stringResource(R.string.auto_label))
             }
-            Text(
-                parts.joinToString(" · "),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Column {
+                Text(
+                    parts.joinToString(" · "),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (isActive && statistics != null) {
+                    Text(
+                        TunnelNotifier.statisticsLine(LocalContext.current, statistics),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         },
         trailingContent = {
             androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {

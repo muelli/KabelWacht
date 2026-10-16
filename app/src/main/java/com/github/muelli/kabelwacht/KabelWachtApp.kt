@@ -11,6 +11,7 @@ import com.github.muelli.kabelwacht.data.ConfigStore
 import com.github.muelli.kabelwacht.data.SettingsStore
 import com.github.muelli.kabelwacht.data.TunnelRepository
 import com.github.muelli.kabelwacht.data.WidgetBindingStore
+import com.github.muelli.kabelwacht.notification.TunnelNotifier
 import com.github.muelli.kabelwacht.vpn.TunnelManager
 import com.github.muelli.kabelwacht.vpn.automation.AutomationEngine
 import com.github.muelli.kabelwacht.vpn.automation.ConditionMonitorService
@@ -51,11 +52,13 @@ class AppContainer(context: Context) {
     val repository: TunnelRepository = TunnelRepository(ConfigStore(context), conditionsStore, widgetBindings)
     val tunnelManager: TunnelManager = TunnelManager(context, settings)
     val networkMonitor: NetworkStateMonitor = NetworkStateMonitor(context)
+    private val notifier: TunnelNotifier = TunnelNotifier(context, tunnelManager)
     val automationEngine: AutomationEngine = AutomationEngine(
         conditionsStore = conditionsStore,
         repository = repository,
         tunnelManager = tunnelManager,
         networkMonitor = networkMonitor,
+        onAutoConnectFailed = notifier::autoConnectFailed,
     )
 
     /**
@@ -74,6 +77,9 @@ class AppContainer(context: Context) {
     private var latestWidgetState: TunnelWidgetState? = null
 
     init {
+        // Status-bar icon and live traffic while a tunnel is up; failure alerts.
+        notifier.observe(scope)
+
         // Sync foreground monitor service lifecycle with active automations
         scope.launch {
             automationEngine.hasActiveAutomations.collect { active ->
@@ -159,6 +165,7 @@ class AppContainer(context: Context) {
             ?: return
         val profile = repository.get(name) ?: return
         runCatching { tunnelManager.setTunnelState(profile, up = true) }
+            .onFailure { notifier.alwaysOnFailed(name, it) }
     }
 }
 

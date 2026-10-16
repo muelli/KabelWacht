@@ -17,10 +17,13 @@ import com.github.muelli.kabelwacht.data.TunnelRepository
 import com.github.muelli.kabelwacht.data.TunnelRunConditions
 import com.github.muelli.kabelwacht.ui.UiMessage
 import com.github.muelli.kabelwacht.vpn.TunnelManager
+import com.github.muelli.kabelwacht.vpn.TunnelStatistics
 import com.github.muelli.kabelwacht.vpn.automation.AutomationEngine
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class TunnelListViewModel(
@@ -54,6 +57,10 @@ class TunnelListViewModel(
     val conditions: StateFlow<Map<String, TunnelRunConditions>> =
         conditionsStore?.conditions ?: MutableStateFlow(emptyMap())
 
+    /** Live traffic of the active tunnel, sampled only while the list is visible. */
+    val statistics: StateFlow<TunnelStatistics?> = tunnelManager.statisticsUpdates()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     private val _message = MutableStateFlow<UiMessage?>(null)
     /** Transient user-facing message (shown in a snackbar), or null. */
     val message: StateFlow<UiMessage?> = _message.asStateFlow()
@@ -61,6 +68,7 @@ class TunnelListViewModel(
     /** VPN consent intent to launch before activating a tunnel, or null if already granted. */
     fun consentIntent(): Intent? = tunnelManager.consentIntent()
 
+    /** Re-read the stored profiles; called whenever the list screen is resumed. */
     fun onResume() = repository.refresh()
 
     /**
@@ -69,6 +77,9 @@ class TunnelListViewModel(
      */
     fun duplicateOf(raw: String): String? =
         runCatching { repository.findDuplicate(ConfigStore.parse(raw)) }.getOrNull()
+
+    /** The stored profile called [name], if any. */
+    fun profile(name: String): TunnelProfile? = repository.get(name)
 
     /** Bring [profile] up (assumes VPN consent already granted) or down. */
     fun setActive(profile: TunnelProfile, up: Boolean) {

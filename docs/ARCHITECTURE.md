@@ -26,12 +26,17 @@ com.github.muelli.kabelwacht
 │   └── ConditionsStore  one key=value rules file per tunnel in filesDir/conditions/
 ├── vpn/
 │   ├── WgTunnel         com.wireguard.android.backend.Tunnel adapter
-│   ├── TunnelManager    wraps GoBackend; one active tunnel; VPN consent
+│   ├── TunnelManager    wraps GoBackend; one active tunnel; VPN consent; statistics
+│   ├── TunnelSource     what the notification layer reads from TunnelManager
+│   ├── TunnelStatistics traffic + last handshake of the active tunnel
 │   └── automation/
 │       ├── NetworkStateMonitor    physical-network (never VPN) snapshots
 │       ├── AutomationEngine       debounces, evaluates rules, drives TunnelManager
 │       ├── ConditionMonitorService  foreground service, alive only while rules exist
 │       └── BootReceiver           resumes monitoring after reboot
+├── notification/
+│   ├── TunnelNotifier   ongoing status notification (status-bar icon) + failure alerts
+│   └── NotificationActionReceiver  the status notification's Disconnect action
 └── ui/
     ├── list/            tunnel list screen + ViewModel (activate/delete/search)
     ├── edit/            create/edit/import screen + ViewModel (validates config)
