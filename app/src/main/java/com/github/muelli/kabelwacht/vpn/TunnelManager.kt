@@ -25,10 +25,14 @@ import kotlinx.coroutines.withContext
  * v1 keeps at most one tunnel active at a time: bringing one up first tears down any
  * other. The name of the active tunnel is exposed as [activeTunnel] for the UI.
  */
-class TunnelManager(context: Context, private val settings: SettingsStore) {
+class TunnelManager(
+    context: Context,
+    private val settings: SettingsStore,
+    backend: Backend = GoBackend(context.applicationContext),
+) {
 
     private val appContext = context.applicationContext
-    private val backend: Backend = GoBackend(appContext)
+    private val backend: Backend = backend
 
     // Reuse one WgTunnel per name so the backend's identity checks stay stable.
     private val tunnels = mutableMapOf<String, WgTunnel>()
