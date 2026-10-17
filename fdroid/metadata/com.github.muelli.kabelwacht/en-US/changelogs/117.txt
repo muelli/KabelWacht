@@ -1,0 +1,4 @@
+No changes to the app itself.
+
+This release only changes how the build is packaged and signed for
+distribution channels outside this project's own repository.

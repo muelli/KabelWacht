@@ -1,0 +1,5 @@
+Fixes Wi-Fi rules for run conditions. Android hides the Wi-Fi network
+name from apps working in the background, so a rule like "every Wi-Fi
+except my home network" could leave the tunnel connected at home. The
+app now asks for that information the way Android 12 and later expect,
+whenever you have granted it location permission for Wi-Fi rules.
