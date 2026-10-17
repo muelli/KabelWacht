@@ -7,6 +7,9 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 ## [Unreleased]
 
 ### Added
+- The edit screen shows the tunnel's **public key**, derived live from the
+  private key, with a button to copy it for the peer's admin. The tunnel menu
+  also offers "Copy public key" (#33).
 - Each home-screen widget can be bound to a **specific tunnel**: the launcher
   asks when the widget is placed, and Android 12+ can reconfigure it later.
   "Automatic" keeps the previous behaviour (follow the connected tunnel, else

@@ -3,6 +3,7 @@
 
 package com.github.muelli.kabelwacht.ui.edit
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Autorenew
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -50,6 +52,7 @@ import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -61,6 +64,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.muelli.kabelwacht.R
 import com.github.muelli.kabelwacht.ui.AppViewModelProvider
 import com.github.muelli.kabelwacht.ui.theme.MaxContentWidth
+import com.github.muelli.kabelwacht.util.copyPublicKey
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -151,6 +155,7 @@ fun EditTunnelScreen(
                     label = stringResource(R.string.field_private_key),
                     onGenerate = viewModel::generatePrivateKey,
                 )
+                PublicKeyField(privateKey = viewModel.privateKey, publicKey = viewModel.publicKey)
                 PlainField(viewModel.addresses, viewModel::onAddressesChange, stringResource(R.string.field_addresses))
                 PlainField(viewModel.dns, viewModel::onDnsChange, stringResource(R.string.field_dns))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -301,6 +306,45 @@ private fun NumberField(
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = modifier,
+    )
+}
+
+/**
+ * The interface public key, read-only and derived from the private key; the
+ * value the user hands to the peer's admin. Blank while the private key is,
+ * and flagged when it does not parse.
+ */
+@Composable
+private fun PublicKeyField(privateKey: String, publicKey: String?) {
+    val context = LocalContext.current
+    val invalid = publicKey == null && privateKey.isNotBlank()
+    OutlinedTextField(
+        value = publicKey.orEmpty(),
+        onValueChange = {},
+        readOnly = true,
+        label = { Text(stringResource(R.string.field_interface_public_key)) },
+        singleLine = true,
+        isError = invalid,
+        supportingText = if (invalid) {
+            { Text(stringResource(R.string.error_invalid_private_key)) }
+        } else {
+            null
+        },
+        textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace),
+        trailingIcon = publicKey?.let { key ->
+            {
+                val label = stringResource(R.string.field_public_key)
+                val copied = stringResource(R.string.public_key_copied)
+                IconButton(onClick = {
+                    if (copyPublicKey(context, label, key)) {
+                        Toast.makeText(context, copied, Toast.LENGTH_SHORT).show()
+                    }
+                }) {
+                    Icon(Icons.Outlined.ContentCopy, contentDescription = stringResource(R.string.copy_public_key))
+                }
+            }
+        },
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 
