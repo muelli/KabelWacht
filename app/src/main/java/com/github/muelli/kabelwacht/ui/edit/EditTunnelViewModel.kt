@@ -13,6 +13,7 @@ import com.github.muelli.kabelwacht.R
 import com.github.muelli.kabelwacht.data.ConfigStore
 import com.github.muelli.kabelwacht.data.TunnelRepository
 import com.github.muelli.kabelwacht.ui.UiMessage
+import com.github.muelli.kabelwacht.util.derivePublicKey
 import com.wireguard.android.backend.Tunnel
 import com.wireguard.config.BadConfigException
 import com.wireguard.config.Config
@@ -54,6 +55,10 @@ class EditTunnelViewModel(
     // Interface section.
     var privateKey by mutableStateOf("")
         private set
+
+    /** Derived from [privateKey]; null when that is not a valid key. Read from state, so it updates live. */
+    val publicKey: String? get() = derivePublicKey(privateKey)
+
     var addresses by mutableStateOf("")
         private set
     var dns by mutableStateOf("")

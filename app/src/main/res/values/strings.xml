@@ -32,6 +32,10 @@
     <string name="error_config_unreadable">Could not read configuration</string>
     <string name="section_peer_n">Peer %1$d</string>
     <string name="field_private_key">Private key</string>
+    <string name="field_interface_public_key">Public key (give this to the peer)</string>
+    <string name="error_invalid_private_key">Not a valid private key</string>
+    <string name="copy_public_key">Copy public key</string>
+    <string name="public_key_copied">Public key copied</string>
     <string name="field_addresses">Addresses</string>
     <string name="field_dns">DNS</string>
     <string name="field_listen_port">Listen port</string>

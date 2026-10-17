@@ -90,6 +90,7 @@ import com.github.muelli.kabelwacht.ui.UiMessage
 import com.github.muelli.kabelwacht.ui.rememberNotificationPermissionState
 import com.github.muelli.kabelwacht.ui.theme.MaxContentWidth
 import com.github.muelli.kabelwacht.util.confirmDeviceCredential
+import com.github.muelli.kabelwacht.util.copyPublicKey
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.launch
@@ -411,6 +412,13 @@ fun TunnelListScreen(
                             onClick = { onEdit(profile.name) },
                             onEditClick = { onEdit(profile.name) },
                             onConditionsClick = { onConditions(profile.name) },
+                            onCopyPublicKeyClick = {
+                                val key = profile.config.`interface`.keyPair.publicKey.toBase64()
+                                val label = context.getString(R.string.field_public_key)
+                                if (copyPublicKey(context, label, key)) {
+                                    viewModel.showMessage(UiMessage(R.string.public_key_copied))
+                                }
+                            },
                             onExportClick = { toExport = profile },
                             onDeleteClick = { toDelete = profile },
                         )
@@ -532,6 +540,7 @@ private fun TunnelRow(
     onClick: () -> Unit,
     onEditClick: () -> Unit,
     onConditionsClick: () -> Unit,
+    onCopyPublicKeyClick: () -> Unit,
     onExportClick: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
@@ -578,6 +587,10 @@ private fun TunnelRow(
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.edit)) },
                             onClick = { menuOpen = false; onEditClick() },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.copy_public_key)) },
+                            onClick = { menuOpen = false; onCopyPublicKeyClick() },
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.export)) },
