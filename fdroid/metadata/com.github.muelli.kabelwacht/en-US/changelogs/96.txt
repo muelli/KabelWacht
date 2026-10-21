@@ -1,0 +1,9 @@
+Run conditions: tunnels can now connect and disconnect on their own,
+based on the network you are on — only on Wi-Fi, every Wi-Fi except the
+ones you list, never on mobile data or roaming, unmetered only.
+
+Quick toggles: launcher shortcuts, a home-screen widget and a Quick
+Settings tile to switch a tunnel with one tap.
+
+Search in the tunnel list, and better behaviour in desktop mode and on
+large screens.
