@@ -146,8 +146,24 @@
     <string name="automation_service_notification_text">Monitoring network conditions for automated tunnels</string>
     <string name="automation_notification_channel">Tunnel Automation</string>
     <string name="automation_notification_channel_desc">Keeps network rule monitoring active in the background</string>
-    <string name="problems_notification_channel">Connection problems</string>
-    <string name="problems_notification_channel_desc">Tells you when a tunnel could not be connected without you asking, such as always-on VPN after a restart</string>
+
+    <!-- Tunnel statistics -->
+    <string name="stats_traffic">↓ %1$s · ↑ %2$s</string>
+    <string name="stats_handshake">handshake %1$s ago</string>
+    <string name="stats_no_handshake">no handshake yet</string>
+
+    <!-- Status and alert notifications -->
+    <string name="status_notification_channel">Tunnel status</string>
+    <string name="status_notification_channel_desc">Shows in the status bar while a tunnel is connected, with its traffic</string>
+    <string name="status_notification_title">Connected: %1$s</string>
+    <string name="status_notification_public">VPN connected</string>
+    <string name="status_notification_disconnect">Disconnect</string>
+    <string name="alerts_notification_channel">Connection problems</string>
+    <string name="alerts_notification_channel_desc">Tells you when a tunnel could not be connected without you asking, such as always-on VPN after a restart, or was stopped unexpectedly</string>
+    <string name="alert_title">"%1$s" is not connected</string>
+    <string name="alert_auto_connect_failed">Automatic connection failed: %1$s</string>
+    <string name="alert_no_vpn_consent">The run conditions want this tunnel up, but VPN permission is missing. Open KabelWacht and connect once to grant it.</string>
+    <string name="alert_tunnel_dropped">The tunnel was stopped by the system or another VPN app.</string>
     <string name="always_on_failed_title">Always-on VPN is not connected</string>
     <string name="always_on_failed_text">Could not connect “%1$s”. Open KabelWacht to connect it.</string>
 </resources>
