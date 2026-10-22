@@ -39,6 +39,8 @@ DERIVATION IS A CONTRACT (v1) — the seed *is* the private key, and this
 algorithm is the map between them. It must never change for existing seeds;
 any future change must introduce a new version label and keep v1 intact:
 
+  seed       = $SEED with surrounding whitespace stripped, so that a stray
+               trailing newline cannot silently mint a second identity
   PRK        = HMAC-SHA256(key="kabelwacht-signing-v1", msg=seed)
   scalar     = (int(HMAC-SHA512(PRK, role || ":ec-scalar")) mod (n-1)) + 1
                where n is the SECP256R1 group order; key = scalar * G
@@ -155,8 +157,12 @@ def main() -> int:
         sys.exit(f"usage: SEED='...' {sys.argv[0]} [--bootstrap] {{app|fdroid|play}} <out.p12>")
     role, out_path = args
 
-    seed = os.environ.get("SEED", "")
-    if len(seed.strip()) < 32:
+    # Strip before both the check and the derivation. Validating the stripped
+    # seed while deriving from the raw one let "seed" and "seed\n" pass the
+    # same gate and yield different keys — caught loudly here by the pinned
+    # certificate, but silently minting a second identity under --bootstrap.
+    seed = os.environ.get("SEED", "").strip()
+    if len(seed) < 32:
         sys.exit("SEED must be set and at least 32 characters of high-entropy data")
 
     prk = hmac.new(SALT, seed.encode(), hashlib.sha256).digest()
