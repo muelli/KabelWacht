@@ -29,11 +29,20 @@ lost, which is why it is reasonable to derive it from the same seed as the
 irreplaceable one.
 
 Why the certificate lives in git: Android identifies a signer by the exact
-certificate bytes, and ECDSA self-signatures are randomized — regenerating
-the certificate each run would look like a different signer. The certificate
+certificate bytes, and those bytes are NOT reproducible from the seed. Every
+bootstrap draws a fresh random serial number (and for EC roles the ECDSA
+self-signature is randomized on top of that), so regenerating the certificate
+would look like a different signer even though the key is identical. The certificate
 is public material (it is embedded in every APK), so pinning it in the
 repository is both safe and transparent. The script refuses to build a
 keystore whose derived key does not match the pinned certificate.
+
+Reproducible from the seed: the private key, the keystore passphrase and the
+alias. NOT reproducible: the certificate (random serial; randomized ECDSA
+signature) and the .p12 container (PKCS#12 re-encrypts with a fresh random
+salt, and picks its algorithm from the local OpenSSL). Those files differing
+between runs is expected; the pinned certificate is what keeps the identity
+stable. Compare keys, never file bytes.
 
 DERIVATION IS A CONTRACT (v1) — the seed *is* the private key, and this
 algorithm is the map between them. It must never change for existing seeds;
