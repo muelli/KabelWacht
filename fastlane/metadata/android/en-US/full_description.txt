@@ -9,15 +9,17 @@ Features:
 * Export a tunnel back to a standard wg-quick .conf file, protected by
   device authentication — the file contains your private key.
 * One-tap connect/disconnect with a per-tunnel switch.
-* Toggle a tunnel from outside the app: launcher shortcuts, a home-screen
-  widget, or a Quick Settings tile.
+* Toggle a tunnel from outside the app: launcher shortcuts, a resizable
+  home-screen widget you can point at a particular tunnel, or a Quick
+  Settings tile.
 * Run conditions: let a tunnel connect and disconnect by itself depending
   on the network — only on Wi-Fi, every Wi-Fi except the ones you list,
   only on chosen networks, never on mobile data or while roaming, or on
   unmetered connections only.
 * Always-on VPN support, including reconnecting after a reboot.
 * A structured editor with Interface and Peer sections, with the complete
-  wg-quick file one tap away.
+  wg-quick file one tap away. It shows the tunnel's public key too, ready
+  to copy for whoever administers the server.
 * Fully usable with a hardware keyboard — shortcuts for search, new
   tunnel and save, and every control reachable by Tab and arrow keys.
 * Userspace WireGuard backend — no root required.

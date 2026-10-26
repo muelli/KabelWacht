@@ -4,7 +4,7 @@ All notable changes to KabelWacht are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Per-release notes shown
 in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
-## [Unreleased]
+## [135] — versionCode 135
 
 ### Added
 - The edit screen shows the tunnel's **public key**, derived live from the

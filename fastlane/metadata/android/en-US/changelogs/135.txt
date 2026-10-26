@@ -1,0 +1,10 @@
+The edit screen now shows a tunnel's public key, ready to copy for
+whoever administers the server.
+
+Each home-screen widget can be pointed at a particular tunnel when you
+place it, and resizes freely.
+
+Run conditions are more dependable: a tunnel switched on by hand stays
+on until the network changes, and automation and always-on VPN survive a
+restart. On Android 13+ the app now asks for notification permission, so
+its notices are no longer hidden.
