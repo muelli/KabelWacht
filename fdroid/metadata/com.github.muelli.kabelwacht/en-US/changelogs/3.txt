@@ -1,0 +1,6 @@
+Always-on VPN support: Android reconnects your most recently used tunnel
+automatically (including after a reboot). A new shield action opens the
+system VPN settings.
+
+Also: app icon in the F-Droid listing, predictive back gesture, and an
+updated Kotlin toolchain.
