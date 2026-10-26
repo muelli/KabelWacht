@@ -1,0 +1,96 @@
+name: Refresh dependency verification metadata
+
+# Every dependency or toolchain bump fails the build until
+# gradle/verification-metadata.xml lists the new artifacts' hashes — a new
+# Gradle, for instance, brings its own embedded Kotlin onto the buildscript
+# classpath. Regenerating that by hand needs a full Android toolchain, so run
+# it here instead and push the result back to the branch.
+#
+# Usage: Actions -> Refresh dependency verification metadata -> Run workflow,
+# and pick the branch (a Dependabot branch is an ordinary branch in this
+# repository, so it appears in the list).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive  # WireGuard sources are built from source
+          ref: ${{ github.ref_name }}  # write back to the dispatched branch
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools
+
+      - name: Install NDK and CMake
+        run: sdkmanager "ndk;27.2.12479018" "cmake;3.22.1"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          dependency-graph: disabled  # its artifacts are absent from the metadata
+          cache-read-only: true
+
+      - name: Regenerate the metadata
+        run: |
+          set -euo pipefail
+          # The task list has to match what CI actually builds, or entries it
+          # needs will be missing. Writing the metadata is a no-op under the
+          # configuration cache, hence --no-configuration-cache.
+          ./gradlew --no-daemon \
+            --write-verification-metadata sha256,sha512 \
+            --no-configuration-cache \
+            lint testDebugUnitTest assembleDebug -PtunnelAbis=arm64-v8a
+
+      - name: Check that the result actually verifies
+        run: |
+          set -euo pipefail
+          # Writing the metadata skips verification, so prove the file is
+          # usable before pushing it.
+          ./gradlew --no-daemon lint testDebugUnitTest assembleDebug -PtunnelAbis=arm64-v8a
+
+      - name: Commit and push
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- gradle/verification-metadata.xml; then
+            echo "::notice::Metadata already current — nothing to push."
+            echo "No change: the metadata already covered every artifact." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # Entries disappearing usually means this resolved less than CI does,
+          # which would break the build later rather than here.
+          REMOVED="$(git diff -U0 -- gradle/verification-metadata.xml | grep -c '^-[^-]' || true)"
+          ADDED="$(git diff -U0 -- gradle/verification-metadata.xml | grep -c '^+[^+]' || true)"
+          echo "Added $ADDED line(s), removed $REMOVED line(s)." >> "$GITHUB_STEP_SUMMARY"
+          if [ "$REMOVED" -gt 0 ]; then
+            echo "::warning::This refresh also removes $REMOVED line(s); read the diff rather than assuming it is safe."
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "Refresh dependency verification metadata" -- gradle/verification-metadata.xml
+          git push origin "HEAD:${{ github.ref_name }}"
+
+          {
+            echo
+            echo "Pushed to \`${{ github.ref_name }}\`."
+            echo
+            echo "A push made with GITHUB_TOKEN does not start another workflow run,"
+            echo "so re-run the checks on the pull request to pick this up."
+          } >> "$GITHUB_STEP_SUMMARY"
