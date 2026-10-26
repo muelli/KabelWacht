@@ -4,6 +4,16 @@ All notable changes to KabelWacht are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Per-release notes shown
 in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
+## [Unreleased]
+
+### Fixed
+- Run-condition monitoring could stop the moment it started. The flow reporting
+  whether any tunnel has rules enabled was seeded with "none" and corrected only
+  afterwards on a background dispatcher, so whoever read it first could act on
+  the placeholder: the monitor service would stop itself, or the app would stop
+  the service it was about to need. It is now seeded from the stored rules,
+  which are read from disk synchronously.
+
 ## [135] — versionCode 135
 
 ### Added

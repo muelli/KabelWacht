@@ -23,6 +23,13 @@ import kotlinx.coroutines.launch
 
 /**
  * Monitors physical network transitions (Wi-Fi, Cellular, Ethernet) excluding VPN interfaces.
+ *
+ * Registration lasts as long as the process and is deliberately *not* tied to
+ * whether any tunnel has run conditions enabled: the run-conditions screen shows
+ * the current network — and offers to add it to a rule — before the first rule
+ * exists. A registered callback costs nothing while the network is quiet, and
+ * what keeps automation working in the background is [ConditionMonitorService]
+ * holding the process alive, not this callback.
  */
 class NetworkStateMonitor(
     private val context: Context,
@@ -37,7 +44,6 @@ class NetworkStateMonitor(
     val networkSnapshot: StateFlow<NetworkStateSnapshot> = _networkSnapshot.asStateFlow()
 
     private val activeNetworks = mutableMapOf<Network, NetworkCapabilities>()
-    private var isRegistered = false
 
     /**
      * From API 31 the system redacts the SSID out of the callback's
@@ -95,16 +101,14 @@ class NetworkStateMonitor(
         start()
     }
 
-    fun start() {
+    private fun start() {
         val cm = connectivityManager ?: return
-        if (isRegistered) return
         val request = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             // NET_CAPABILITY_NOT_VPN is included by default in NetworkRequest.Builder!
             .build()
         runCatching {
             cm.registerNetworkCallback(request, networkCallback)
-            isRegistered = true
         }
         // Seed initial state if available
         val current = cm.activeNetwork
@@ -118,19 +122,6 @@ class NetworkStateMonitor(
             }
         }
         updateSnapshot()
-    }
-
-    fun stop() {
-        val cm = connectivityManager ?: return
-        if (!isRegistered) return
-        runCatching {
-            cm.unregisterNetworkCallback(networkCallback)
-            isRegistered = false
-        }
-        synchronized(activeNetworks) {
-            activeNetworks.clear()
-        }
-        _networkSnapshot.value = NetworkStateSnapshot()
     }
 
     private fun isPhysicalInternetNetwork(caps: NetworkCapabilities): Boolean {
