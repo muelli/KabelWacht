@@ -41,7 +41,7 @@ jobs:
         run: sdkmanager "ndk;27.2.12479018" "cmake;3.22.1"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
           dependency-graph: disabled  # its artifacts are absent from the metadata
           cache-read-only: true
