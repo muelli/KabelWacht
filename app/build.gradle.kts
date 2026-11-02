@@ -74,6 +74,8 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+        // Robolectric needs the merged resources/manifest on the test classpath.
+        unitTests.isIncludeAndroidResources = true
     }
 
     // Reproducible builds: F-Droid rebuilds and signs from source, so we ship no
@@ -111,4 +113,7 @@ dependencies {
     implementation(libs.zxing.android.embedded)
 
     testImplementation(libs.junit)
+    // Runs Context-dependent code (stores, DataStore) in plain JVM unit tests.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
 }
