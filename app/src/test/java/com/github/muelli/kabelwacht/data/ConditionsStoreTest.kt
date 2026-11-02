@@ -68,4 +68,32 @@ class ConditionsStoreTest {
         assertEquals(TunnelRunConditions(), store.get("old-name"))
         assertEquals(conditions, store.get("new-name"))
     }
+
+    @Test
+    fun hasEnabled_reflects_whether_any_tunnel_has_rules_on() {
+        val dir = tempFolder.newFolder("conditions")
+        val store = ConditionsStore(dir)
+        assertFalse(store.hasEnabled())
+
+        // Configured but switched off does not count.
+        store.save("off", TunnelRunConditions(enabled = false, wifiSsids = setOf("Home")))
+        assertFalse(store.hasEnabled())
+
+        store.save("on", TunnelRunConditions(enabled = true))
+        assertTrue(store.hasEnabled())
+
+        store.delete("on")
+        assertFalse(store.hasEnabled())
+    }
+
+    @Test
+    fun hasEnabled_is_true_immediately_after_construction() {
+        // The monitor service and the boot receiver ask this before any flow has
+        // had a chance to be computed, so the answer must come from the load in
+        // the constructor rather than from later state.
+        val dir = tempFolder.newFolder("conditions")
+        ConditionsStore(dir).save("auto", TunnelRunConditions(enabled = true))
+
+        assertTrue(ConditionsStore(dir).hasEnabled())
+    }
 }

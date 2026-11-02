@@ -54,6 +54,17 @@ class ConditionsStore(private val dir: File) {
     fun get(name: String): TunnelRunConditions =
         _conditions.value[name] ?: TunnelRunConditions()
 
+    /**
+     * True if any tunnel currently has run conditions turned on — the question
+     * that decides whether the monitor service needs to run.
+     *
+     * Reads the backing state directly, which [refresh] fills synchronously at
+     * construction, so callers that run early in the process lifetime (the boot
+     * receiver, the service itself) get the real answer rather than the seed
+     * value of a flow still being computed on a background dispatcher.
+     */
+    fun hasEnabled(): Boolean = _conditions.value.values.any { it.enabled }
+
     fun save(name: String, conditions: TunnelRunConditions) {
         val file = fileFor(name)
         if (!conditions.enabled && conditions == TunnelRunConditions()) {

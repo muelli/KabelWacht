@@ -16,10 +16,8 @@ class BootReceiver : BroadcastReceiver() {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             // Read the store directly: it loads synchronously at construction, whereas
             // the engine's derived StateFlow starts on a background dispatcher and may
-            // still hold its initial value this early in the process lifetime.
-            val hasAutomations = context.appContainer.conditionsStore.conditions.value
-                .any { it.value.enabled }
-            if (hasAutomations) {
+            // still be catching up this early in the process lifetime.
+            if (context.appContainer.conditionsStore.hasEnabled()) {
                 ConditionMonitorService.sync(context, true)
             }
         }
