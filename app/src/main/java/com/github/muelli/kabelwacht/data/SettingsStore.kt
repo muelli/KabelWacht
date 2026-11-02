@@ -33,6 +33,13 @@ class SettingsStore(context: Context) {
         }
     }
 
+    /** Follow a tunnel rename, so the always-on target does not point at a name that no longer exists. */
+    suspend fun renameAlwaysOnTunnel(oldName: String, newName: String) {
+        store.edit { prefs ->
+            if (prefs[ALWAYS_ON_TUNNEL] == oldName) prefs[ALWAYS_ON_TUNNEL] = newName
+        }
+    }
+
     /**
      * Records that the notification permission prompt was offered on connect.
      * Returns true only the first time, so connecting never nags again.

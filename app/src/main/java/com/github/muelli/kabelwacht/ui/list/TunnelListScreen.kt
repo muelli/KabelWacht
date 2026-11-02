@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.FileOpen
 import androidx.compose.material.icons.outlined.QrCodeScanner
@@ -108,6 +109,7 @@ fun TunnelListScreen(
     val container = context.appContainer
 
     val profiles by viewModel.profiles.collectAsStateWithLifecycle()
+    val invalidProfiles by viewModel.invalidProfiles.collectAsStateWithLifecycle()
     val activeTunnel by viewModel.activeTunnel.collectAsStateWithLifecycle()
     val alwaysOnTunnel by viewModel.alwaysOnTunnel.collectAsStateWithLifecycle(initialValue = null)
     val conditions by viewModel.conditions.collectAsStateWithLifecycle()
@@ -243,6 +245,7 @@ fun TunnelListScreen(
     var addMenuOpen by remember { mutableStateOf(false) }
     var overflowOpen by remember { mutableStateOf(false) }
     var toDelete by remember { mutableStateOf<TunnelProfile?>(null) }
+    var invalidToDelete by remember { mutableStateOf<String?>(null) }
 
     // Leaving the search collapses it (before falling through to the system back).
     BackHandler(enabled = viewModel.searchActive) { viewModel.closeSearch() }
@@ -378,9 +381,9 @@ fun TunnelListScreen(
         val shown = remember(profiles, viewModel.searchQuery) {
             TunnelSearch.filter(profiles, viewModel.searchQuery)
         }
-        if (profiles.isEmpty()) {
+        if (profiles.isEmpty() && invalidProfiles.isEmpty()) {
             EmptyState(padding)
-        } else if (shown.isEmpty()) {
+        } else if (shown.isEmpty() && invalidProfiles.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
                 contentAlignment = Alignment.Center,
@@ -424,9 +427,43 @@ fun TunnelListScreen(
                         )
                         HorizontalDivider()
                     }
+                    items(invalidProfiles, key = { "invalid:$it" }) { name ->
+                        ListItem(
+                            headlineContent = { Text(name) },
+                            supportingContent = {
+                                Text(
+                                    stringResource(R.string.invalid_profile_label),
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            },
+                            trailingContent = {
+                                androidx.compose.material3.IconButton(onClick = { invalidToDelete = name }) {
+                                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete))
+                                }
+                            },
+                        )
+                        HorizontalDivider()
+                    }
                 }
             }
         }
+    }
+
+    invalidToDelete?.let { name ->
+        AlertDialog(
+            onDismissRequest = { invalidToDelete = null },
+            title = { Text(stringResource(R.string.delete_tunnel_title)) },
+            text = { Text(stringResource(R.string.delete_tunnel_message, name)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteInvalid(name)
+                    invalidToDelete = null
+                }) { Text(stringResource(R.string.delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { invalidToDelete = null }) { Text(stringResource(R.string.cancel)) }
+            },
+        )
     }
 
     toExport?.let { profile ->

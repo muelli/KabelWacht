@@ -57,6 +57,7 @@
     <string name="cancel">Cancel</string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
+    <string name="invalid_profile_label">Invalid configuration — cannot be used</string>
 
     <!-- Delete dialog -->
     <string name="delete_tunnel_title">Delete tunnel?</string>
