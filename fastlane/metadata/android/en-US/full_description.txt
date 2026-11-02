@@ -4,14 +4,15 @@ It does one thing well: manage WireGuard tunnels and connect.
 
 Features:
 
-* Create, list, search, edit and delete WireGuard profiles.
+* Create, list, search, edit and delete WireGuard profiles. A profile that
+  can no longer be read is shown as invalid, so you can remove it.
 * Import a configuration by scanning a QR code or opening a .conf file.
 * Export a tunnel back to a standard wg-quick .conf file, protected by
   device authentication — the file contains your private key.
 * One-tap connect/disconnect with a per-tunnel switch.
 * Toggle a tunnel from outside the app: launcher shortcuts, a resizable
   home-screen widget you can point at a particular tunnel, or a Quick
-  Settings tile.
+  Settings tile (long-press it to open the app).
 * Run conditions: let a tunnel connect and disconnect by itself depending
   on the network — only on Wi-Fi, every Wi-Fi except the ones you list,
   only on chosen networks, never on mobile data or while roaming, or on

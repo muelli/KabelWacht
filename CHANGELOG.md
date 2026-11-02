@@ -4,6 +4,20 @@ All notable changes to KabelWacht are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Per-release notes shown
 in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
+## [142] — versionCode 142
+
+### Added
+- Long-pressing the **Quick Settings tile** opens the app, instead of the
+  system's app-info page ([#49](https://github.com/muelli/KabelWacht/issues/49)).
+
+### Fixed
+- Renaming a tunnel keeps it as the **always-on** tunnel; the setting used to
+  keep the old name, so always-on did nothing when several tunnels existed
+  ([#48](https://github.com/muelli/KabelWacht/issues/48)).
+- A profile whose configuration cannot be parsed is **listed as invalid**, with
+  a delete action. It used to be hidden while its file still occupied the name
+  ([#48](https://github.com/muelli/KabelWacht/issues/48)).
+
 ## [135] — versionCode 135
 
 ### Added
