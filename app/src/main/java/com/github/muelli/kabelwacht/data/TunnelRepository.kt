@@ -18,10 +18,16 @@ class TunnelRepository(
     private val store: ConfigStore,
     private val conditionsStore: ConditionsStore? = null,
     private val widgetBindings: WidgetBindingStore? = null,
+    private val onRenamed: ((oldName: String, newName: String) -> Unit)? = null,
 ) {
 
     private val _profiles = MutableStateFlow<List<TunnelProfile>>(emptyList())
     val profiles: StateFlow<List<TunnelProfile>> = _profiles.asStateFlow()
+
+    private val _invalid = MutableStateFlow<List<String>>(emptyList())
+
+    /** Names of stored profiles that no longer parse; they cannot be used but can be deleted. */
+    val invalidProfiles: StateFlow<List<String>> = _invalid.asStateFlow()
 
     init {
         refresh()
@@ -29,6 +35,7 @@ class TunnelRepository(
 
     fun refresh() {
         _profiles.value = store.list().sortedBy { it.name.lowercase() }
+        _invalid.value = store.listInvalid().sortedBy { it.lowercase() }
     }
 
     fun get(name: String): TunnelProfile? = _profiles.value.firstOrNull { it.name == name }
@@ -62,6 +69,7 @@ class TunnelRepository(
             store.rename(oldName, newName)
             conditionsStore?.rename(oldName, newName)
             widgetBindings?.rename(oldName, newName)
+            onRenamed?.invoke(oldName, newName)
         }
         store.save(newName, config)
         refresh()

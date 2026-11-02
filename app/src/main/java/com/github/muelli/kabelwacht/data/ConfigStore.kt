@@ -22,14 +22,22 @@ class ConfigStore(context: Context) {
 
     private val dir: File = File(context.filesDir, TUNNELS_DIR).apply { mkdirs() }
 
-    /** Parse and load every stored profile. Files that fail to parse are skipped. */
+    private fun confFiles(): List<File> =
+        dir.listFiles { f -> f.isFile && f.name.endsWith(CONF_SUFFIX) }?.toList() ?: emptyList()
+
+    /** Parse and load every stored profile. Files that fail to parse are skipped; see [listInvalid]. */
     fun list(): List<TunnelProfile> =
-        dir.listFiles { f -> f.isFile && f.name.endsWith(CONF_SUFFIX) }
-            ?.mapNotNull { file ->
-                val name = file.name.removeSuffix(CONF_SUFFIX)
-                runCatching { TunnelProfile(name, parse(file.readText())) }.getOrNull()
-            }
-            ?: emptyList()
+        confFiles().mapNotNull { file ->
+            val name = file.name.removeSuffix(CONF_SUFFIX)
+            runCatching { TunnelProfile(name, parse(file.readText())) }.getOrNull()
+        }
+
+    /** Names of stored profiles whose file cannot be read or parsed, so the UI can offer to remove them. */
+    fun listInvalid(): List<String> =
+        confFiles().mapNotNull { file ->
+            val name = file.name.removeSuffix(CONF_SUFFIX)
+            name.takeIf { runCatching { parse(file.readText()) }.isFailure }
+        }
 
     fun exists(name: String): Boolean = fileFor(name).exists()
 

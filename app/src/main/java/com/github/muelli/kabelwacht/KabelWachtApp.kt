@@ -59,7 +59,9 @@ class AppContainer(context: Context) {
     val settings: SettingsStore = SettingsStore(context)
     val conditionsStore: ConditionsStore = ConditionsStore(context)
     val widgetBindings: WidgetBindingStore = WidgetBindingStore(context)
-    val repository: TunnelRepository = TunnelRepository(ConfigStore(context), conditionsStore, widgetBindings)
+    val repository: TunnelRepository = TunnelRepository(ConfigStore(context), conditionsStore, widgetBindings) { old, new ->
+        scope.launch { settings.renameAlwaysOnTunnel(old, new) }
+    }
     val tunnelManager: TunnelManager = TunnelManager(context, settings, Backends.create(context))
     val networkMonitor: NetworkStateMonitor = NetworkStateMonitor(context)
     val automationEngine: AutomationEngine = AutomationEngine(

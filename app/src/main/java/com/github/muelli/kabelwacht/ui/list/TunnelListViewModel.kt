@@ -49,6 +49,7 @@ class TunnelListViewModel(
     }
 
     val profiles: StateFlow<List<TunnelProfile>> = repository.profiles
+    val invalidProfiles: StateFlow<List<String>> = repository.invalidProfiles
     val activeTunnel: StateFlow<String?> = tunnelManager.activeTunnel
     val alwaysOnTunnel: kotlinx.coroutines.flow.Flow<String?> = tunnelManager.alwaysOnTunnel
     val conditions: StateFlow<Map<String, TunnelRunConditions>> =
@@ -91,6 +92,8 @@ class TunnelListViewModel(
             repository.delete(profile.name)
         }
     }
+
+    fun deleteInvalid(name: String) = repository.delete(name)
 
     fun showMessage(message: UiMessage) {
         _message.value = message
