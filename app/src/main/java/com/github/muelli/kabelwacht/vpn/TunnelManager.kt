@@ -12,6 +12,7 @@ import com.github.muelli.kabelwacht.data.TunnelProfile
 import com.wireguard.android.backend.Backend
 import com.wireguard.android.backend.GoBackend
 import com.wireguard.android.backend.Tunnel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,13 +37,16 @@ import kotlinx.coroutines.withContext
  *
  * v1 keeps at most one tunnel active at a time: bringing one up first tears down any
  * other. The name of the active tunnel is exposed as [activeTunnel] for the UI.
- * [backend] and [now] are injectable for tests.
+ * [backend], [now] and the dispatchers are injectable for tests.
  */
 class TunnelManager(
     context: Context,
     private val settings: SettingsStore,
     backend: Backend = GoBackend(context.applicationContext),
     private val now: () -> Long = SystemClock::elapsedRealtime,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    // Where a recovery is queued: the main thread, behind VpnService.onDestroy().
+    private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : TunnelSource {
 
     private val appContext = context.applicationContext
@@ -71,6 +75,10 @@ class TunnelManager(
 
     @Volatile private var lastSwitch: Switch? = null
 
+    // When this app last took a tunnel down; an UP soon after is as exposed to the
+    // old VpnService.onDestroy() as a direct switch is.
+    @Volatile private var lastDownAt: Long? = null
+
     private val scope = CoroutineScope(SupervisorJob())
 
     init {
@@ -91,7 +99,7 @@ class TunnelManager(
      * Bring [profile] up or down. Runs the (blocking) backend call off the main
      * thread. Throws on failure (e.g. missing VPN consent, bad config).
      */
-    suspend fun setTunnelState(profile: TunnelProfile, up: Boolean) = withContext(Dispatchers.IO) {
+    suspend fun setTunnelState(profile: TunnelProfile, up: Boolean) = withContext(ioDispatcher) {
         requests.withLock {
             generation++
             lastSwitch = null
@@ -102,30 +110,36 @@ class TunnelManager(
     /**
      * Bring down whatever tunnel is currently active, if any.
      */
-    suspend fun bringDownActive() = withContext(Dispatchers.IO) {
+    suspend fun bringDownActive() = withContext(ioDispatcher) {
         requests.withLock {
             generation++
             lastSwitch = null
             changing {
-                backend.runningTunnelNames.forEach { running -> bringDown(tunnelFor(running)) }
+                val running = backend.runningTunnelNames
+                running.forEach { bringDown(tunnelFor(it)) }
+                if (running.isNotEmpty()) lastDownAt = now()
             }
         }
         refreshActive()
     }
 
-    // Callers hold [requests].
-    private suspend fun applyState(profile: TunnelProfile, up: Boolean) {
+    // Callers hold [requests]. A [recoverable] UP is remembered, so that a stray DOWN
+    // right after it can be put right; a recovery itself is not, to retry only once.
+    private suspend fun applyState(profile: TunnelProfile, up: Boolean, recoverable: Boolean = true) {
         val tunnel = tunnelFor(profile.name)
         changing {
             if (up) {
                 // Enforce a single active tunnel.
                 val others = backend.runningTunnelNames.filter { it != profile.name }
                 others.forEach { running -> bringDown(tunnelFor(running)) }
-                if (others.isNotEmpty()) {
+                val downRecently = others.isNotEmpty() ||
+                    lastDownAt?.let { now() - it < SWITCH_RACE_MILLIS } == true
+                if (recoverable && downRecently) {
                     lastSwitch = Switch(profile, now(), generation)
                 }
             }
             backend.setState(tunnel, if (up) Tunnel.State.UP else Tunnel.State.DOWN, profile.config)
+            if (!up) lastDownAt = now()
         }
         // Remember the most recently activated tunnel as the always-on target.
         if (up) settings.setAlwaysOnTunnel(profile.name)
@@ -133,7 +147,7 @@ class TunnelManager(
     }
 
     /** Current traffic of [name], or null if it is not the active tunnel. */
-    override suspend fun statistics(name: String): TunnelStatistics? = withContext(Dispatchers.IO) {
+    override suspend fun statistics(name: String): TunnelStatistics? = withContext(ioDispatcher) {
         if (name !in backend.runningTunnelNames) return@withContext null
         val stats = runCatching { backend.getStatistics(tunnelFor(name)) }.getOrNull()
             ?: return@withContext null
@@ -170,7 +184,7 @@ class TunnelManager(
                 // The previous tunnel's VpnService.onDestroy() took the new one down
                 // too: bring it back once, after onDestroy() is done.
                 lastSwitch = null
-                scope.launch(Dispatchers.Main) { recover(switch) }
+                scope.launch(mainDispatcher) { recover(switch) }
             } else if (name == wanted) {
                 _unexpectedlyDown.tryEmit(name)
             }
@@ -180,10 +194,10 @@ class TunnelManager(
 
     // Brings the tunnel lost to [switch] back up, unless a request came in since.
     private suspend fun recover(switch: Switch) {
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             requests.withLock {
                 if (generation != switch.generation) return@withLock
-                runCatching { applyState(switch.profile, up = true) }
+                runCatching { applyState(switch.profile, up = true, recoverable = false) }
                     .onFailure { _unexpectedlyDown.tryEmit(switch.profile.name) }
             }
         }
@@ -207,11 +221,11 @@ class TunnelManager(
         _activeTunnel.value = backend.runningTunnelNames.firstOrNull()
     }
 
-    /** [profile] was brought up in place of another tunnel at [at], by request [generation]. */
+    /** [profile] was brought up at [at], by request [generation], right after a tunnel went down. */
     private class Switch(val profile: TunnelProfile, val at: Long, val generation: Long)
 
     internal companion object {
-        /** How long after a switch a stray DOWN of the new tunnel is put down to [Switch]. */
+        /** How long after a tunnel was taken down a stray DOWN of the next one is put down to [Switch]. */
         const val SWITCH_RACE_MILLIS = 5_000L
     }
 }
