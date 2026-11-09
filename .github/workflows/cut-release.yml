@@ -38,5 +38,8 @@ jobs:
           # Trigger the actual release workflows on the new tag
           gh workflow run release.yml --ref "$TAG"
           gh workflow run publish-fdroid.yml --ref "$TAG"
+          # A tag pushed with GITHUB_TOKEN does not start push-triggered
+          # workflows, so the reproducibility check has to be dispatched too.
+          gh workflow run reproducible.yml --ref "$TAG"
           
-          echo "Successfully triggered release.yml and publish-fdroid.yml on $TAG"
+          echo "Successfully triggered release.yml, publish-fdroid.yml and reproducible.yml on $TAG"
