@@ -30,10 +30,18 @@ class AutomationEngine(
     val networkMonitor: NetworkStateMonitor,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
-    /** True if any configured tunnel currently has run conditions enabled. */
+    /**
+     * True if any configured tunnel currently has run conditions enabled.
+     *
+     * Seeded from the store rather than from a bare `false`: the mapped value is
+     * recomputed on a background dispatcher, so a seed of `false` would briefly
+     * claim there is nothing to monitor, and collectors act on that — the
+     * container would stop the monitor service it is about to need, and the
+     * service would stop itself the moment it started.
+     */
     val hasActiveAutomations: StateFlow<Boolean> = conditionsStore.conditions
         .map { map -> map.values.any { it.enabled } }
-        .stateIn(scope, SharingStarted.Eagerly, false)
+        .stateIn(scope, SharingStarted.Eagerly, conditionsStore.hasEnabled())
 
     private var lastEvaluatedNetwork: NetworkStateSnapshot? = null
 
