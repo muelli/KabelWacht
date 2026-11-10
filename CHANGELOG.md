@@ -14,6 +14,11 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
   the service it was about to need. It is now seeded from the stored rules,
   which are read from disk synchronously.
 
+### Changed
+- The app is compiled against Android 17 (API 37), which current AndroidX and
+  Compose releases require. The target SDK stays at 36, so runtime behaviour
+  does not change.
+
 ## [142] — versionCode 142
 
 ### Added
