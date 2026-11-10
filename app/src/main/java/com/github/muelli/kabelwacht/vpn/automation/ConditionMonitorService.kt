@@ -47,7 +47,10 @@ class ConditionMonitorService : Service() {
 
         val container = appContainer
         monitorJob = scope.launch {
-            // Keep service alive only while automations are enabled
+            // Keep service alive only while automations are enabled. The first
+            // value decides whether the service survives being started at all,
+            // so it has to be the real one — see the seed on
+            // AutomationEngine.hasActiveAutomations.
             container.automationEngine.hasActiveAutomations.collect { active ->
                 if (!active) {
                     stopSelf()
@@ -166,11 +169,9 @@ class ConditionMonitorService : Service() {
          * location type it may have been refused in the background.
          */
         fun reassert(context: Context) {
-            val hasAutomations = context.appContainer.conditionsStore.conditions.value
-                .any { it.value.enabled }
             val hasFineLocation = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED
-            if (hasAutomations && hasFineLocation) sync(context, true)
+            if (context.appContainer.conditionsStore.hasEnabled() && hasFineLocation) sync(context, true)
         }
 
         fun sync(context: Context, hasAutomations: Boolean) {

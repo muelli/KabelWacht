@@ -44,7 +44,7 @@ copyleft on them and they impose none on the app.
 
 ## Building
 
-Requirements: JDK 17, the Android SDK (compile/target SDK 36, min SDK 29), plus the
+Requirements: JDK 17, the Android SDK (compile SDK 37, target SDK 36, min SDK 29), plus the
 **NDK 27.2.12479018** and **CMake 3.22.1** (WireGuard is built from source, see below).
 Clone with submodules:
 
