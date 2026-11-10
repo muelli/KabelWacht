@@ -76,6 +76,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -111,6 +112,7 @@ fun TunnelListScreen(
     viewModel: TunnelListViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val container = context.appContainer
 
     val profiles by viewModel.profiles.collectAsStateWithLifecycle()
@@ -145,13 +147,13 @@ fun TunnelListScreen(
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
-        if (granted) scanLauncher.launch(qrScanOptions(context.getString(R.string.scan_qr_prompt)))
+        if (granted) scanLauncher.launch(qrScanOptions(resources.getString(R.string.scan_qr_prompt)))
         else viewModel.showMessage(UiMessage(R.string.camera_permission_required))
     }
     fun startScan() {
         val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
             PackageManager.PERMISSION_GRANTED
-        if (granted) scanLauncher.launch(qrScanOptions(context.getString(R.string.scan_qr_prompt)))
+        if (granted) scanLauncher.launch(qrScanOptions(resources.getString(R.string.scan_qr_prompt)))
         else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
@@ -244,8 +246,8 @@ fun TunnelListScreen(
     fun exportAfterAuth(profile: TunnelProfile) {
         confirmDeviceCredential(
             context,
-            context.getString(R.string.export_auth_title),
-            context.getString(R.string.export_auth_subtitle, profile.name),
+            resources.getString(R.string.export_auth_title),
+            resources.getString(R.string.export_auth_subtitle, profile.name),
         ) { authenticated ->
             if (authenticated) {
                 pendingExport = profile
@@ -432,7 +434,7 @@ fun TunnelListScreen(
                             onConditionsClick = { onConditions(profile.name) },
                             onCopyPublicKeyClick = {
                                 val key = profile.config.`interface`.keyPair.publicKey.toBase64()
-                                val label = context.getString(R.string.field_public_key)
+                                val label = resources.getString(R.string.field_public_key)
                                 if (copyPublicKey(context, label, key)) {
                                     viewModel.showMessage(UiMessage(R.string.public_key_copied))
                                 }
@@ -523,6 +525,7 @@ fun TunnelListScreen(
 @Composable
 private fun EasterEggTitle() {
     val context = LocalContext.current
+    val resources = LocalResources.current
     var taps by remember { mutableStateOf(0) }
     var lastTap by remember { mutableStateOf(0L) }
     Text(
@@ -544,7 +547,7 @@ private fun EasterEggTitle() {
                         .getPackageInfo(context.packageName, 0).versionName
                     Toast.makeText(
                         context,
-                        context.getString(R.string.version_toast, version),
+                        resources.getString(R.string.version_toast, version),
                         Toast.LENGTH_SHORT,
                     ).show()
                 }
