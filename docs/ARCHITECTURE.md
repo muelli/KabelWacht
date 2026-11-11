@@ -29,6 +29,7 @@ com.github.muelli.kabelwacht
 │   ├── TunnelManager    wraps GoBackend; one active tunnel; VPN consent; statistics
 │   ├── TunnelSource     what the notification layer reads from TunnelManager
 │   ├── TunnelStatistics traffic + last handshake of the active tunnel
+│   ├── PeerSilenceMonitor  alerts when the active tunnel sends without ever being answered
 │   └── automation/
 │       ├── NetworkStateMonitor    physical-network (never VPN) snapshots
 │       ├── AutomationEngine       debounces, evaluates rules, drives TunnelManager
