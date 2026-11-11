@@ -74,8 +74,6 @@
     <string name="always_on_label">Always-on</string>
 
     <!-- Overflow menu -->
-    <string name="more_options">More options</string>
-    <string name="privacy_policy">Privacy policy</string>
 
     <!-- Quick toggles: launcher shortcuts and the home-screen widget -->
     <string name="shortcut_toggle_label">Toggle "%1$s"</string>
