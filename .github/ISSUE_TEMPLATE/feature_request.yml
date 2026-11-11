@@ -17,11 +17,3 @@ body:
     id: alternatives
     attributes:
       label: Alternatives considered
-  - type: checkboxes
-    id: scope
-    attributes:
-      label: Scope
-      description: KabelWacht intentionally stays simple and free-software-only.
-      options:
-        - label: This keeps the app free-software and F-Droid-compatible (no proprietary dependencies).
-          required: true
