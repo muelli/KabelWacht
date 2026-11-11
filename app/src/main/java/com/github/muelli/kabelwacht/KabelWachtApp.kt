@@ -14,6 +14,8 @@ import com.github.muelli.kabelwacht.data.TunnelRepository
 import com.github.muelli.kabelwacht.data.WidgetBindingStore
 import com.github.muelli.kabelwacht.notification.TunnelNotifier
 import com.github.muelli.kabelwacht.vpn.Backends
+import com.github.muelli.kabelwacht.vpn.EndpointWatchdog
+import com.github.muelli.kabelwacht.vpn.PhysicalNetworkResolver
 import com.github.muelli.kabelwacht.vpn.TunnelManager
 import com.github.muelli.kabelwacht.vpn.retryOnConnectivity
 import com.github.muelli.kabelwacht.vpn.automation.AutomationEngine
@@ -87,6 +89,11 @@ class AppContainer(context: Context) {
     init {
         // Status-bar icon and live traffic while a tunnel is up; failure alerts.
         notifier.observe(scope)
+
+        // Bring a tunnel back whose peer has moved to another address, which a
+        // hostname endpoint (dynamic DNS) is only resolved for once, at connect.
+        EndpointWatchdog(tunnelManager, { repository.get(it) }, PhysicalNetworkResolver(networkMonitor))
+            .observe(scope)
 
         // Sync foreground monitor service lifecycle with active automations
         scope.launch {

@@ -7,14 +7,17 @@ import android.content.Context
 import android.content.Intent
 import android.net.VpnService
 import android.os.SystemClock
+import com.github.muelli.kabelwacht.data.ConfigStore
 import com.github.muelli.kabelwacht.data.SettingsStore
 import com.github.muelli.kabelwacht.data.TunnelProfile
 import com.wireguard.android.backend.Backend
 import com.wireguard.android.backend.GoBackend
 import com.wireguard.android.backend.Tunnel
+import com.wireguard.config.Config
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -47,7 +50,7 @@ class TunnelManager(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     // Where a recovery is queued: the main thread, behind VpnService.onDestroy().
     private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
-) : TunnelSource {
+) : EndpointTunnels {
 
     private val appContext = context.applicationContext
     private val backend: Backend = backend
@@ -78,6 +81,9 @@ class TunnelManager(
     // When this app last took a tunnel down; an UP soon after is as exposed to the
     // old VpnService.onDestroy() as a direct switch is.
     @Volatile private var lastDownAt: Long? = null
+
+    // The addresses the running tunnel's hostname endpoints were brought up with.
+    @Volatile private var addressesInUse: AddressesInUse? = null
 
     private val scope = CoroutineScope(SupervisorJob())
 
@@ -123,6 +129,34 @@ class TunnelManager(
         refreshActive()
     }
 
+    /**
+     * Takes [profile] down and up again, as a request of the app's own (nothing is
+     * reported as unexpectedly down on the way). Does nothing if it is not the
+     * tunnel that is up. If it cannot be brought up again, that is reported as
+     * [unexpectedlyDown] and thrown.
+     */
+    override suspend fun reconnect(profile: TunnelProfile) = withContext(ioDispatcher) {
+        // Not cancellable: stopping between the DOWN and the UP would leave it off.
+        withContext(NonCancellable) {
+            requests.withLock {
+                if (profile.name !in backend.runningTunnelNames) return@withLock
+                generation++
+                lastSwitch = null
+                applyState(profile, up = false)
+                try {
+                    applyState(profile, up = true)
+                } catch (e: Exception) {
+                    _unexpectedlyDown.tryEmit(profile.name)
+                    throw e
+                }
+            }
+        }
+    }
+
+    override fun endpointsInUse(name: String): Map<String, String> =
+        addressesInUse?.takeIf { it.tunnel == name && name in backend.runningTunnelNames }
+            ?.addresses.orEmpty()
+
     // Callers hold [requests]. A [recoverable] UP is remembered, so that a stray DOWN
     // right after it can be put right; a recovery itself is not, to retry only once.
     private suspend fun applyState(profile: TunnelProfile, up: Boolean, recoverable: Boolean = true) {
@@ -138,8 +172,18 @@ class TunnelManager(
                     lastSwitch = Switch(profile, now(), generation)
                 }
             }
-            backend.setState(tunnel, if (up) Tunnel.State.UP else Tunnel.State.DOWN, profile.config)
-            if (!up) lastDownAt = now()
+            if (up) {
+                // A new Config, so the endpoint hostnames are looked up now: the backend
+                // keeps what it resolved on the Config for a couple of minutes.
+                val config = freshConfig(profile.config)
+                addressesInUse = null
+                backend.setState(tunnel, Tunnel.State.UP, config)
+                addressesInUse = AddressesInUse(profile.name, hostnameEndpoints(config))
+            } else {
+                backend.setState(tunnel, Tunnel.State.DOWN, profile.config)
+                addressesInUse = null
+                lastDownAt = now()
+            }
         }
         // Remember the most recently activated tunnel as the always-on target.
         if (up) settings.setAlwaysOnTunnel(profile.name)
@@ -170,6 +214,24 @@ class TunnelManager(
                 delay(intervalMillis)
             }
         }
+
+    // The same configuration, parsed anew; the original if that somehow fails.
+    private fun freshConfig(config: Config): Config =
+        runCatching { ConfigStore.parse(config.toWgQuickString()) }.getOrDefault(config)
+
+    // Hostname endpoints of [config] and the address each was brought up with. The
+    // backend resolved them a moment ago and the endpoint remembers the answer, so
+    // this reads the address wireguard-go was given rather than looking it up again.
+    private fun hostnameEndpoints(config: Config): Map<String, String> {
+        val found = mutableMapOf<String, String>()
+        for (peer in config.peers) {
+            val endpoint = peer.endpoint.orElse(null) ?: continue
+            if (isAddressLiteral(endpoint.host)) continue
+            val address = endpoint.resolved.orElse(null)?.host ?: continue
+            found[endpoint.host] = address
+        }
+        return found
+    }
 
     private fun tunnelFor(name: String): WgTunnel = synchronized(tunnels) {
         tunnels.getOrPut(name) { WgTunnel(name) { state -> onBackendStateChange(name, state) } }
@@ -221,11 +283,18 @@ class TunnelManager(
         _activeTunnel.value = backend.runningTunnelNames.firstOrNull()
     }
 
+    private class AddressesInUse(val tunnel: String, val addresses: Map<String, String>)
+
     /** [profile] was brought up at [at], by request [generation], right after a tunnel went down. */
     private class Switch(val profile: TunnelProfile, val at: Long, val generation: Long)
 
     internal companion object {
         /** How long after a tunnel was taken down a stray DOWN of the next one is put down to [Switch]. */
         const val SWITCH_RACE_MILLIS = 5_000L
+
+        private val IPV4 = Regex("""\d{1,3}(\.\d{1,3}){3}""")
+
+        /** True for an IPv4 or IPv6 address written out, as opposed to a hostname. */
+        internal fun isAddressLiteral(host: String): Boolean = ':' in host || IPV4.matches(host)
     }
 }

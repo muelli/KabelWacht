@@ -6,6 +6,18 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
 ## [Unreleased]
 
+### Fixed
+- A tunnel whose endpoint is a hostname (dynamic DNS) **recovers when the peer's
+  address changes**. The name is looked up once, when the tunnel comes up; if
+  the peer moved afterwards, or the record still held the old address at that
+  moment, the tunnel stayed up without ever connecting until it was switched
+  off and on by hand. Now a tunnel that sends without being answered has its
+  hostname looked up again, over the physical network, and is reconnected when
+  the address has changed. A peer that is merely down is looked up less and
+  less often, but never restarts the tunnel. Switching a tunnel on also looks
+  the name up afresh each time, where before it could reuse an answer of the
+  last couple of minutes.
+
 ## [174] — versionCode 174
 
 ### Added
