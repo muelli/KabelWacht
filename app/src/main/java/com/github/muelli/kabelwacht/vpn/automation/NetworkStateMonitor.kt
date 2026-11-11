@@ -124,6 +124,22 @@ class NetworkStateMonitor(
         updateSnapshot()
     }
 
+    /**
+     * The physical network to use for lookups that must not go through the VPN,
+     * chosen like the one the snapshot describes (Wi-Fi, then Ethernet, then
+     * mobile), or null if there is none.
+     */
+    fun physicalNetwork(): Network? = synchronized(activeNetworks) {
+        val preferred = listOf(
+            NetworkCapabilities.TRANSPORT_WIFI,
+            NetworkCapabilities.TRANSPORT_ETHERNET,
+            NetworkCapabilities.TRANSPORT_CELLULAR,
+        )
+        preferred.firstNotNullOfOrNull { transport ->
+            activeNetworks.entries.firstOrNull { it.value.hasTransport(transport) }?.key
+        } ?: activeNetworks.keys.firstOrNull()
+    }
+
     private fun isPhysicalInternetNetwork(caps: NetworkCapabilities): Boolean {
         // Exclude VPN interfaces so the VPN itself doesn't trigger loops
         val isNotVpn = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)

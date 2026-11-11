@@ -20,6 +20,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -85,6 +87,8 @@ class TunnelManagerTest {
     private fun down(p: TunnelProfile) = runBlocking { manager.setTunnelState(p, up = false) }
 
     private fun running(): Set<String> = backend.runningTunnelNames
+
+    private fun reconnect(p: TunnelProfile) = runBlocking { manager.reconnect(p) }
 
     @Test
     fun a_requested_up_and_down_raise_nothing() {
@@ -221,6 +225,84 @@ class TunnelManagerTest {
     }
 
     @Test
+    fun an_up_hands_the_backend_a_fresh_copy_of_the_config() {
+        up(a)
+
+        // New objects, so the endpoint hostnames are resolved again rather than
+        // taken from what the previous Config remembered; the same configuration.
+        val given = backend.lastUpConfig!!
+        assertNotSame(a.config, given)
+        assertEquals(a.config.toWgQuickString(), given.toWgQuickString())
+    }
+
+    @Test
+    fun a_reconnect_takes_the_tunnel_down_and_up_again_without_an_alert() {
+        up(a)
+
+        reconnect(a)
+
+        assertEquals(setOf("a"), running())
+        assertEquals(2, backend.upsOf("a"))
+        assertEquals("a", manager.activeTunnel.value)
+        assertTrue(alerts.isEmpty())
+    }
+
+    @Test
+    fun a_reconnect_of_a_tunnel_that_is_not_up_does_nothing() {
+        up(a)
+        reconnect(b)
+        assertEquals(setOf("a"), running())
+        assertEquals(1, backend.upsOf("a"))
+        assertEquals(0, backend.upsOf("b"))
+
+        down(a)
+        reconnect(a)
+        assertTrue(running().isEmpty())
+        assertEquals(1, backend.upsOf("a"))
+        assertTrue(alerts.isEmpty())
+    }
+
+    @Test
+    fun a_reconnect_that_cannot_bring_the_tunnel_up_again_fails_and_raises_an_alert() {
+        up(a)
+        backend.failNextUp = true
+
+        val result = runCatching { reconnect(a) }
+
+        assertTrue(result.isFailure)
+        assertTrue(running().isEmpty())
+        assertEquals(listOf("a"), alerts)
+    }
+
+    @Test
+    fun a_stray_down_right_after_a_reconnect_restarts_the_tunnel_once() {
+        up(a)
+        reconnect(a)
+        clock += 100
+        backend.systemStopsService()
+
+        main.runPending()
+
+        assertEquals(setOf("a"), running())
+        assertEquals(3, backend.upsOf("a"))
+        assertTrue(alerts.isEmpty())
+    }
+
+    @Test
+    fun endpoints_given_as_addresses_are_not_tracked() {
+        up(a)
+        assertTrue(manager.endpointsInUse("a").isEmpty())
+    }
+
+    @Test
+    fun addresses_and_hostnames_are_told_apart() {
+        assertTrue(TunnelManager.isAddressLiteral("192.95.5.69"))
+        assertTrue(TunnelManager.isAddressLiteral("2001:db8::1"))
+        assertFalse(TunnelManager.isAddressLiteral("vpn.example.org"))
+        assertFalse(TunnelManager.isAddressLiteral("1.2.3.4.example.org"))
+    }
+
+    @Test
     fun taking_down_whatever_is_active_raises_nothing() {
         up(a)
         runBlocking { manager.bringDownActive() }
@@ -240,6 +322,9 @@ private class FakeBackend : Backend {
     var failNextUp = false
 
     fun upsOf(name: String): Int = ups[name] ?: 0
+
+    /** The config the latest UP was given. */
+    var lastUpConfig: Config? = null
 
     /** What VpnService.onDestroy() does when it runs late: stops whatever is current. */
     fun systemStopsService() {
@@ -272,6 +357,7 @@ private class FakeBackend : Backend {
                 old.onStateChange(Tunnel.State.DOWN)
             }
             current = tunnel
+            lastUpConfig = config
             ups[tunnel.name] = upsOf(tunnel.name) + 1
             tunnel.onStateChange(Tunnel.State.UP)
         } else if (state == Tunnel.State.DOWN && tunnel === current) {
