@@ -18,6 +18,11 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
   the name up afresh each time, where before it could reuse an answer of the
   last couple of minutes.
 
+### Changed
+- The overflow menu of the tunnel list, whose only entry was a link to the
+  privacy policy, is gone. The policy is still in the repository and the store
+  listing.
+
 ## [174] — versionCode 174
 
 ### Added
