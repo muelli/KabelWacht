@@ -196,9 +196,15 @@ class EndpointWatchdogTest {
         tunnels.addresses = mapOf("vpn.example.org" to "198.51.100.1")
         answer = { listOf("203.0.113.7") }
 
+        // Like the real thing, a reconnect brings the tunnel up with the address now answered.
+        tunnels.addressAfterReconnect = "203.0.113.7"
+
         start()
         waitFor("a reconnect") { tunnels.reconnects.get() >= 1 }
+        // Not again: the tunnel now uses the address the lookup returns.
+        Thread.sleep(100)
 
+        assertEquals(1, tunnels.reconnects.get())
         assertEquals(listOf("a"), tunnels.reconnected)
     }
 
@@ -282,6 +288,9 @@ private class FakeTunnels : EndpointTunnels {
     @Volatile var addresses: Map<String, String> = emptyMap()
     @Volatile var failReconnect = false
 
+    // The address every hostname endpoint is in use with after a successful reconnect.
+    @Volatile var addressAfterReconnect: String? = null
+
     // Sent without ever being answered.
     @Volatile var stats: () -> TunnelStatistics = { TunnelStatistics("a", 0, 296, null, 0) }
 
@@ -297,8 +306,13 @@ private class FakeTunnels : EndpointTunnels {
     override fun endpointsInUse(name: String): Map<String, String> = addresses
 
     override suspend fun reconnect(profile: TunnelProfile) {
-        reconnects.incrementAndGet()
+        // Recorded before counted: a test that waits for the count then reads the list.
         reconnected += profile.name
-        if (failReconnect) throw IllegalStateException("cannot bring it up")
+        try {
+            if (failReconnect) throw IllegalStateException("cannot bring it up")
+            addressAfterReconnect?.let { new -> addresses = addresses.mapValues { new } }
+        } finally {
+            reconnects.incrementAndGet()
+        }
     }
 }
