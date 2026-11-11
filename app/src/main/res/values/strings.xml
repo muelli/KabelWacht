@@ -162,7 +162,11 @@
     <string name="status_notification_public">VPN connected</string>
     <string name="status_notification_disconnect">Disconnect</string>
     <string name="alerts_notification_channel">Connection problems</string>
-    <string name="alerts_notification_channel_desc">Tells you when a tunnel could not be connected without you asking, such as always-on VPN after a restart, was stopped unexpectedly, or is connected but not answered by its peer</string>
+    <string name="alerts_notification_channel_desc">Tells you when a tunnel could not be connected without you asking, such as always-on VPN after a restart, or when VPN permission is missing</string>
+    <string name="dropped_notification_channel">Tunnel stopped</string>
+    <string name="dropped_notification_channel_desc">Tells you when a connected tunnel was stopped by the system or another VPN app</string>
+    <string name="silent_notification_channel">Peer not answering</string>
+    <string name="silent_notification_channel_desc">Tells you when a tunnel is connected but its peer has not answered for a minute, so nothing gets through</string>
     <string name="alert_title">“%1$s” is not connected</string>
     <string name="alert_auto_connect_failed">Automatic connection failed: %1$s</string>
     <string name="alert_no_vpn_consent">The run conditions want this tunnel up, but VPN permission is missing. Open KabelWacht and connect once to grant it.</string>

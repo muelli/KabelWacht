@@ -28,6 +28,12 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
   last couple of minutes.
 
 ### Changed
+- The alerts are split over **three notification channels** — "Connection
+  problems" (failed automatic or always-on connections, missing VPN permission),
+  "Tunnel stopped" and "Peer not answering" — so that Android's own settings can
+  give each its own sound, pop-up behaviour, or silence. Tunnel-stopped alerts
+  were on "Connection problems" before, and now start with the default
+  settings of their new channel.
 - The overflow menu of the tunnel list, whose only entry was a link to the
   privacy policy, is gone. The policy is still in the repository and the store
   listing.

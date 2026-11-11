@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
  *   a Disconnect action;
  * - **alerts** when a tunnel could not be brought up without the user watching
  *   (automation, always-on), was stopped by the system or another VPN app, or
- *   is up but its peer does not answer.
+ *   is up but its peer does not answer — each of the three on its own channel.
  *
  * Posted through the platform [NotificationManager], which silently drops them
  * while the user has not granted notification permission.
@@ -60,15 +60,21 @@ class TunnelNotifier(
                     description = this@TunnelNotifier.context.getString(R.string.status_notification_channel_desc)
                     setShowBadge(false)
                 },
-                NotificationChannel(
-                    ALERTS_CHANNEL_ID,
-                    this.context.getString(R.string.alerts_notification_channel),
-                    NotificationManager.IMPORTANCE_DEFAULT,
-                ).apply {
-                    description = this@TunnelNotifier.context.getString(R.string.alerts_notification_channel_desc)
-                },
+                alertChannel(ALERTS_CHANNEL_ID, R.string.alerts_notification_channel, R.string.alerts_notification_channel_desc),
+                alertChannel(DROPPED_CHANNEL_ID, R.string.dropped_notification_channel, R.string.dropped_notification_channel_desc),
+                alertChannel(SILENT_CHANNEL_ID, R.string.silent_notification_channel, R.string.silent_notification_channel_desc),
             ),
         )
+    }
+
+    // Each kind of alert has a channel of its own, so that sound, pop-up and
+    // silencing can be set for each in the system settings.
+    private fun alertChannel(
+        id: String,
+        name: Int,
+        description: Int,
+    ) = NotificationChannel(id, context.getString(name), NotificationManager.IMPORTANCE_DEFAULT).apply {
+        this.description = context.getString(description)
     }
 
     // Tunnels whose automated connection failure was already reported.
@@ -99,7 +105,7 @@ class TunnelNotifier(
         }
         scope.launch {
             tunnels.unexpectedlyDown.collect { name ->
-                alert(name, context.getString(R.string.alert_tunnel_dropped))
+                alert(name, context.getString(R.string.alert_tunnel_dropped), channel = DROPPED_CHANNEL_ID)
             }
         }
     }
@@ -127,6 +133,7 @@ class TunnelNotifier(
             context.getString(R.string.alert_peer_silent_text),
             title = context.getString(R.string.alert_peer_silent_title, name),
             id = PEER_SILENT_NOTIFICATION_ID,
+            channel = SILENT_CHANNEL_ID,
         )
     }
 
@@ -174,10 +181,11 @@ class TunnelNotifier(
         text: String,
         title: String = context.getString(R.string.alert_title, name),
         id: Int = ALERT_NOTIFICATION_ID,
+        channel: String = ALERTS_CHANNEL_ID,
     ) {
         val notification =
             NotificationCompat
-                .Builder(context, ALERTS_CHANNEL_ID)
+                .Builder(context, channel)
                 .setSmallIcon(R.drawable.ic_tile_tunnel)
                 .setContentTitle(title)
                 .setContentText(text)
@@ -239,7 +247,15 @@ class TunnelNotifier(
 
     companion object {
         const val STATUS_CHANNEL_ID = "tunnel_status_channel"
+
+        // Failures to connect: automation, always-on, missing VPN permission.
         const val ALERTS_CHANNEL_ID = "tunnel_alerts_channel"
+
+        // A tunnel stopped by the system or another VPN app.
+        const val DROPPED_CHANNEL_ID = "tunnel_dropped_channel"
+
+        // A connected tunnel whose peer does not answer.
+        const val SILENT_CHANNEL_ID = "tunnel_peer_silent_channel"
         private const val STATUS_NOTIFICATION_ID = 2002
         private const val ALERT_NOTIFICATION_ID = 2003
 
