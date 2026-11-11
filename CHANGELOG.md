@@ -6,6 +6,15 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
 ## [Unreleased]
 
+### Added
+- An **alert when a tunnel is connected but its peer does not answer**. Android
+  and WireGuard count a tunnel as up as soon as its interface exists, so a
+  blocked or dead peer left the toggle on and the key symbol showing, and with
+  lockdown nothing got through, without any sign of a problem. A tunnel that
+  sends without being answered for a minute now raises an alert, which goes
+  away by itself when the peer answers or the tunnel is switched off. It works
+  for any endpoint, not just hostnames.
+
 ### Fixed
 - A tunnel whose endpoint is a hostname (dynamic DNS) **recovers when the peer's
   address changes**. The name is looked up once, when the tunnel comes up; if

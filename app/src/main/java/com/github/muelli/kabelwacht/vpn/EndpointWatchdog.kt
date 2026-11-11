@@ -182,6 +182,9 @@ class StallTracker(
         return now - since >= stallGraceMillis && now >= nextCheckAt
     }
 
+    /** Whether the tunnel has looked stuck, as of the last sample, for the whole grace period. */
+    fun isStalled(now: Long): Boolean = stalledSince?.let { now - it >= stallGraceMillis } ?: false
+
     /** The check found the endpoint where it was: look again later, and less often. */
     fun checkedWithoutChange(now: Long) {
         nextCheckAt = now + backoffMillis[minOf(step, backoffMillis.lastIndex)]

@@ -15,6 +15,7 @@ import com.github.muelli.kabelwacht.data.WidgetBindingStore
 import com.github.muelli.kabelwacht.notification.TunnelNotifier
 import com.github.muelli.kabelwacht.vpn.Backends
 import com.github.muelli.kabelwacht.vpn.EndpointWatchdog
+import com.github.muelli.kabelwacht.vpn.PeerSilenceMonitor
 import com.github.muelli.kabelwacht.vpn.PhysicalNetworkResolver
 import com.github.muelli.kabelwacht.vpn.TunnelManager
 import com.github.muelli.kabelwacht.vpn.retryOnConnectivity
@@ -89,6 +90,9 @@ class AppContainer(context: Context) {
     init {
         // Status-bar icon and live traffic while a tunnel is up; failure alerts.
         notifier.observe(scope)
+
+        // A tunnel is "up" even when its peer never answers; say so instead of failing silently.
+        PeerSilenceMonitor(tunnelManager, notifier::peerSilent, notifier::peerAnswered).observe(scope)
 
         // Bring a tunnel back whose peer has moved to another address, which a
         // hostname endpoint (dynamic DNS) is only resolved for once, at connect.

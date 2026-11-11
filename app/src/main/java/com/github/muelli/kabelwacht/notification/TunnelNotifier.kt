@@ -35,7 +35,8 @@ import kotlinx.coroutines.launch
  *   what tells, from the status bar, that the VPN is on — with live traffic and
  *   a Disconnect action;
  * - **alerts** when a tunnel could not be brought up without the user watching
- *   (automation, always-on) or was stopped by the system or another VPN app.
+ *   (automation, always-on), was stopped by the system or another VPN app, or
+ *   is up but its peer does not answer.
  *
  * Posted through the platform [NotificationManager], which silently drops them
  * while the user has not granted notification permission.
@@ -119,6 +120,21 @@ class TunnelNotifier(
         )
     }
 
+    /** [name] is up, but its peer does not answer, so nothing gets through. */
+    fun peerSilent(name: String) {
+        alert(
+            name,
+            context.getString(R.string.alert_peer_silent_text),
+            title = context.getString(R.string.alert_peer_silent_title, name),
+            id = PEER_SILENT_NOTIFICATION_ID,
+        )
+    }
+
+    /** The peer of [name] answers again, or the tunnel is off: [peerSilent] no longer applies. */
+    fun peerAnswered(name: String) {
+        manager.cancel(name, PEER_SILENT_NOTIFICATION_ID)
+    }
+
     /** Always-on VPN could not bring [name] up, even after retrying. */
     fun alwaysOnFailed(name: String) {
         alert(
@@ -157,6 +173,7 @@ class TunnelNotifier(
         name: String,
         text: String,
         title: String = context.getString(R.string.alert_title, name),
+        id: Int = ALERT_NOTIFICATION_ID,
     ) {
         val notification =
             NotificationCompat
@@ -170,8 +187,8 @@ class TunnelNotifier(
                 .setOnlyAlertOnce(true)
                 .setCategory(NotificationCompat.CATEGORY_ERROR)
                 .build()
-        // One alert per tunnel, replaced rather than stacked.
-        manager.notify(name, ALERT_NOTIFICATION_ID, notification)
+        // One alert of each kind per tunnel, replaced rather than stacked.
+        manager.notify(name, id, notification)
     }
 
     private fun statusNotification(
@@ -225,6 +242,9 @@ class TunnelNotifier(
         const val ALERTS_CHANNEL_ID = "tunnel_alerts_channel"
         private const val STATUS_NOTIFICATION_ID = 2002
         private const val ALERT_NOTIFICATION_ID = 2003
+
+        // Apart from the other alerts, so that clearing it cannot clear one of those.
+        private const val PEER_SILENT_NOTIFICATION_ID = 2004
         private const val STATUS_REFRESH_MILLIS = 2000L
 
         /** "↓ 1.2 MiB · ↑ 340 KiB · handshake 12 s ago", shared with the tunnel list. */
