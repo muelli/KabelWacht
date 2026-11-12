@@ -12,7 +12,11 @@ Features:
 * One-tap connect/disconnect with a per-tunnel switch.
 * A status notification with live traffic and the last handshake, and the
   same numbers on the connected tunnel's row. Alerts tell you when a tunnel
-  fails to connect unattended or is stopped by the system or another VPN.
+  fails to connect unattended, is stopped by the system or another VPN, or is
+  connected but not answered by its peer. Each kind has its own notification
+  channel, so Android's settings can mute or raise them separately.
+* A tunnel whose endpoint is a hostname (dynamic DNS) recovers by itself when
+  the peer's address changes.
 * Toggle a tunnel from outside the app: launcher shortcuts, a resizable
   home-screen widget you can point at a particular tunnel, or a Quick
   Settings tile (long-press it to open the app).

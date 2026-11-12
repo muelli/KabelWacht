@@ -6,6 +6,8 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
 ## [Unreleased]
 
+## [187] — versionCode 187
+
 ### Added
 - An **alert when a tunnel is connected but its peer does not answer**. Android
   and WireGuard count a tunnel as up as soon as its interface exists, so a
