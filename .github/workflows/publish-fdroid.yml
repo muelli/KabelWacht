@@ -46,12 +46,18 @@ jobs:
           if [ -z "$APP_SIGNING_SEED" ] || [ -z "$FDROID_SIGNING_SEED" ]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "::warning::Skipping F-Droid publish: set the APP_SIGNING_SEED and FDROID_SIGNING_SEED secrets (one high-entropy string each; see README 'Signing')."
-          elif [ "${{ github.ref_type }}" != "tag" ] && git describe --tags --exact-match HEAD >/dev/null 2>&1; then
-            # Releasing pushes the commit and its tag seconds apart. Both events
-            # build the same, now-tagged commit, so publishing here as well would
-            # add a second entry with the same versionCode.
+          elif [ "${{ github.ref_type }}" != "tag" ] && {
+            git describe --tags --exact-match HEAD >/dev/null 2>&1 ||
+            [ -f "fastlane/metadata/android/en-US/changelogs/$(git rev-list --count HEAD).txt" ]
+          }; then
+            # A release is pushed as a commit first and tagged a moment later, and
+            # the push starts this workflow before the tag exists. Publishing here
+            # as well would add a second entry with the same versionCode. The
+            # release commit is recognisable without the tag: it is the one whose
+            # commit count has a changelog file (changelogs/<versionCode>.txt).
+            # Either way the tag's run publishes the commit.
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Skipping F-Droid publish: this commit is tagged, so the tag's run publishes it."
+            echo "::notice::Skipping F-Droid publish: this is a release commit, so the tag's run publishes it."
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
