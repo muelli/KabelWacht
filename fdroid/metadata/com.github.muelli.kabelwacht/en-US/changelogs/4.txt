@@ -1,0 +1,5 @@
+Updated build toolchain (Android Gradle Plugin 9.2, Gradle 9.6) — the release
+build remains byte-for-byte reproducible.
+
+The F-Droid repository entry now shows the KabelWacht icon as well.
+No functional changes to the app.

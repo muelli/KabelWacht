@@ -1,0 +1,5 @@
+Relicensed to AGPL-3.0-or-later.
+
+WireGuard is now built entirely from source (wireguard-go + wireguard-tools)
+instead of using a prebuilt library, and the release build is byte-for-byte
+reproducible. No functional changes to the app itself.

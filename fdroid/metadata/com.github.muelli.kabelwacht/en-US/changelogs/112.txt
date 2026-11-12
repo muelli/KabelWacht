@@ -1,0 +1,8 @@
+Keyboard support, for desktop mode and anyone using a physical keyboard:
+
+Ctrl+F searches your tunnels and Esc closes the search, Ctrl+N creates a
+tunnel, Ctrl+S saves in the editor, and Delete on a selected tunnel asks
+to remove it.
+
+The whole app can now be operated with Tab, the arrow keys and
+Enter or Space, with every control showing where the focus is.
