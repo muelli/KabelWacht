@@ -1,0 +1,10 @@
+A tunnel that is connected but whose peer does not answer now raises an
+alert, instead of failing silently.
+
+A tunnel with a hostname endpoint (dynamic DNS) reconnects by itself when
+the peer's address changes.
+
+The alerts are split over three notification channels, so Android's
+settings can mute or raise each kind on its own.
+
+The privacy policy menu is gone from the tunnel list.

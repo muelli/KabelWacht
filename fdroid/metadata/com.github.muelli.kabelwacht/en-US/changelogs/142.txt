@@ -1,0 +1,6 @@
+Long-pressing the Quick Settings tile now opens the app instead of
+Android's app-info page.
+
+Renaming a tunnel keeps it as the always-on tunnel. A tunnel whose
+configuration can no longer be read is now listed, marked as invalid,
+so you can delete it instead of it lingering invisibly.

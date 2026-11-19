@@ -1,0 +1,9 @@
+While a tunnel is connected, a status notification shows live traffic
+and the last handshake, with a Disconnect button. The same numbers
+appear on the connected tunnel's row; "no handshake yet" points at a
+wrong key or an unreachable endpoint.
+
+You are now alerted when a tunnel fails to connect unattended (run
+conditions, always-on VPN) or is stopped by the system or another VPN.
+
+Run-condition monitoring no longer stops itself right after starting.
