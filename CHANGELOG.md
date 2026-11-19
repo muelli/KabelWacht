@@ -6,6 +6,14 @@ in F-Droid live in `fastlane/metadata/android/en-US/changelogs/`.
 
 ## [Unreleased]
 
+### Added
+- The run conditions screen **warns when Android's lockdown is on** ("Block
+  connections without VPN"). With lockdown, a network that the conditions
+  exclude does not get normal internet: Android blocks all traffic of every app
+  while no VPN is up, and the app cannot change that. Android only tells while a
+  tunnel is connected, so the notice goes by what was seen the last time one
+  connected.
+
 ## [187] — versionCode 187
 
 ### Added

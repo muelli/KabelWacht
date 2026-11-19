@@ -111,6 +111,8 @@
     <string name="enable_run_conditions">Enable run conditions</string>
     <string name="run_conditions_desc">Automatically connects or disconnects this tunnel based on your current network environment.</string>
     <string name="overlap_title">Competes with other tunnels</string>
+    <string name="lockdown_title">Lockdown blocks excluded networks</string>
+    <string name="lockdown_desc">Android\'s “Block connections without VPN” was on when this tunnel last connected. With it on, a network these conditions exclude gets no internet at all instead of a normal connection: Android blocks the traffic of every app until a VPN is up. Turn it off in Android\'s VPN settings to use run conditions, or let the tunnel run everywhere.</string>
     <string name="overlap_desc">%1$s can also run on some of these networks. Only one tunnel is active at a time: a connected one that still qualifies stays, otherwise the first in the list connects.</string>
     <string name="section_live_status">Current status</string>
     <string name="status_eval_running">Conditions met · Tunnel will connect</string>

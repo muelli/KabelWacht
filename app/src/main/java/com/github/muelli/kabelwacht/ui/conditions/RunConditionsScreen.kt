@@ -195,7 +195,21 @@ fun RunConditionsScreen(
 
             val overlapping = viewModel.overlappingTunnels
             if (overlapping.isNotEmpty()) {
-                OverlapNotice(overlapping)
+                InfoNotice(
+                    title = stringResource(R.string.overlap_title),
+                    description = stringResource(
+                        R.string.overlap_desc,
+                        overlapping.joinToString(", ") { "\"$it\"" },
+                    ),
+                )
+            }
+
+            val lockdownSeen by viewModel.lockdownSeen.collectAsStateWithLifecycle()
+            if (conditions.enabled && lockdownSeen) {
+                InfoNotice(
+                    title = stringResource(R.string.lockdown_title),
+                    description = stringResource(R.string.lockdown_desc),
+                )
             }
 
             // Live status card
@@ -499,7 +513,10 @@ private fun RadioOption(
 }
 
 @Composable
-private fun OverlapNotice(names: List<String>) {
+private fun InfoNotice(
+    title: String,
+    description: String,
+) {
     OutlinedCard(
         colors = CardDefaults.outlinedCardColors(
             containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f),
@@ -518,13 +535,13 @@ private fun OverlapNotice(names: List<String>) {
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    stringResource(R.string.overlap_title),
+                    title,
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
             }
             Text(
-                stringResource(R.string.overlap_desc, names.joinToString(", ") { "\"$it\"" }),
+                description,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
             )

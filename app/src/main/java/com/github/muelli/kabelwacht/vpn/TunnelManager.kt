@@ -64,6 +64,9 @@ class TunnelManager(
     /** Name of the tunnel Android's always-on VPN feature will (re)connect, if set. */
     val alwaysOnTunnel: Flow<String?> = settings.alwaysOnTunnel
 
+    /** Whether lockdown was on when a tunnel last connected, for the run conditions screen. */
+    val lockdownSeen: Flow<Boolean> = settings.lockdownSeen
+
     // The tunnel this app last asked to keep up; only its DOWN is unexpected.
     @Volatile private var wanted: String? = null
 
@@ -186,7 +189,10 @@ class TunnelManager(
             }
         }
         // Remember the most recently activated tunnel as the always-on target.
-        if (up) settings.setAlwaysOnTunnel(profile.name)
+        if (up) {
+            settings.setAlwaysOnTunnel(profile.name)
+            rememberLockdown()
+        }
         refreshActive()
     }
 
@@ -231,6 +237,13 @@ class TunnelManager(
             found[endpoint.host] = address
         }
         return found
+    }
+
+    // Android only answers while the VPN service runs, as it does right after an UP.
+    // When it cannot tell, what was recorded before stays.
+    private suspend fun rememberLockdown() {
+        val lockdown = runCatching { backend.isLockdownEnabled() }.getOrNull() ?: return
+        settings.setLockdownSeen(lockdown)
     }
 
     private fun tunnelFor(name: String): WgTunnel = synchronized(tunnels) {

@@ -7,18 +7,28 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.github.muelli.kabelwacht.data.ConditionsStore
 import com.github.muelli.kabelwacht.data.MobileConditionMode
 import com.github.muelli.kabelwacht.data.NetworkStateSnapshot
 import com.github.muelli.kabelwacht.data.TunnelRunConditions
 import com.github.muelli.kabelwacht.data.WifiConditionMode
 import com.github.muelli.kabelwacht.vpn.automation.NetworkStateMonitor
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 
 class RunConditionsViewModel(
     private val conditionsStore: ConditionsStore,
     private val networkMonitor: NetworkStateMonitor,
+    lockdownSeen: Flow<Boolean> = flowOf(false),
 ) : ViewModel() {
+
+    /** Lockdown was on when a tunnel last connected: run conditions then leave no network but the VPN. */
+    val lockdownSeen: StateFlow<Boolean> = lockdownSeen
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     var tunnelName: String = ""
         private set

@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -311,6 +312,63 @@ class TunnelManagerTest {
         assertTrue(running().isEmpty())
         assertTrue(alerts.isEmpty())
     }
+
+    private fun lockdownSeen() = runBlocking { manager.lockdownSeen.first() }
+
+    @Test
+    fun connecting_records_that_lockdown_is_on() {
+        backend.lockdown = true
+
+        up(a)
+
+        assertTrue(lockdownSeen())
+    }
+
+    @Test
+    fun connecting_again_records_that_lockdown_was_turned_off() {
+        backend.lockdown = true
+        up(a)
+        down(a)
+
+        backend.lockdown = false
+        up(a)
+
+        assertFalse(lockdownSeen())
+    }
+
+    @Test
+    fun what_was_recorded_stays_when_the_system_cannot_tell() {
+        backend.lockdown = true
+        up(a)
+        down(a)
+
+        backend.lockdown = null
+        up(a)
+
+        assertTrue(lockdownSeen())
+        assertEquals(setOf("a"), running())
+    }
+
+    @Test
+    fun disconnecting_does_not_change_what_was_recorded() {
+        backend.lockdown = true
+        up(a)
+
+        backend.lockdown = false
+        down(a)
+
+        assertTrue(lockdownSeen())
+    }
+
+    @Test
+    fun a_connection_that_failed_records_nothing() {
+        backend.lockdown = true
+        backend.failNextUp = true
+
+        runCatching { up(a) }
+
+        assertFalse(lockdownSeen())
+    }
 }
 
 /** A [Backend] that, like GoBackend, runs one tunnel and tells it about every state change. */
@@ -344,7 +402,10 @@ private class FakeBackend : Backend {
 
     override fun isAlwaysOn(): Boolean = false
 
-    override fun isLockdownEnabled(): Boolean = false
+    /** What the system says about lockdown; null for no answer, as without a running VPN service. */
+    var lockdown: Boolean? = false
+
+    override fun isLockdownEnabled(): Boolean = lockdown ?: throw IllegalStateException("no VPN service")
 
     override fun setState(tunnel: Tunnel, state: Tunnel.State, config: Config?): Tunnel.State {
         if (state == Tunnel.State.UP) {

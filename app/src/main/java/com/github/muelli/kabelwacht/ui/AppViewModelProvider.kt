@@ -35,6 +35,7 @@ object AppViewModelProvider {
             RunConditionsViewModel(
                 conditionsStore = app.container.conditionsStore,
                 networkMonitor = app.container.networkMonitor,
+                lockdownSeen = app.container.settings.lockdownSeen,
             )
         }
     }

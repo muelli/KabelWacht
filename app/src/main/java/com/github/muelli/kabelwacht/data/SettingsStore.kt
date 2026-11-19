@@ -41,6 +41,17 @@ class SettingsStore(context: Context) {
     }
 
     /**
+     * Whether Android's lockdown ("Block connections without VPN") was on the last
+     * time a tunnel connected. Android only tells while the VPN service runs, so
+     * the answer is kept for the times when no tunnel is up.
+     */
+    val lockdownSeen: Flow<Boolean> = store.data.map { it[LOCKDOWN_SEEN] == true }
+
+    suspend fun setLockdownSeen(value: Boolean) {
+        store.edit { it[LOCKDOWN_SEEN] = value }
+    }
+
+    /**
      * Records that the notification permission prompt was offered on connect.
      * Returns true only the first time, so connecting never nags again.
      */
@@ -53,5 +64,6 @@ class SettingsStore(context: Context) {
     private companion object {
         val ALWAYS_ON_TUNNEL = stringPreferencesKey("always_on_tunnel")
         val NOTIFICATION_PROMPTED = booleanPreferencesKey("notification_prompted")
+        val LOCKDOWN_SEEN = booleanPreferencesKey("lockdown_seen")
     }
 }
