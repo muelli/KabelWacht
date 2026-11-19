@@ -94,4 +94,16 @@ class StoresRobolectricTest {
         settings.renameAlwaysOnTunnel("new", "newer")
         assertNull(settings.alwaysOnTunnel.first())
     }
+
+    @Test
+    fun lockdown_is_not_assumed_until_seen() = runBlocking {
+        val settings = SettingsStore(context)
+        assertEquals(false, settings.lockdownSeen.first())
+
+        settings.setLockdownSeen(true)
+        assertEquals(true, settings.lockdownSeen.first())
+
+        settings.setLockdownSeen(false)
+        assertEquals(false, settings.lockdownSeen.first())
+    }
 }

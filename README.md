@@ -20,7 +20,10 @@ for Android. It manages tunnel profiles and connects — nothing more.
   current network — only on Wi-Fi, all Wi-Fis except chosen networks, only specific
   Wi-Fis, never (or only) on mobile data or roaming, unmetered networks only.
   Reading Wi-Fi names needs Android's location permission, requested only if SSID
-  rules are used; GPS is never touched.
+  rules are used; GPS is never touched. Do not combine them with Android's lockdown
+  ("Block connections without VPN"): while the tunnel is off on an excluded
+  network, Android then blocks all traffic there, and the app cannot lift that.
+  The run conditions screen says so when it has seen lockdown on.
 - **No trackers, no analytics, no ads, no Google Play Services.** The only network
   connection the app makes is your own WireGuard tunnel — see the
   [privacy policy](docs/PRIVACY.md).
